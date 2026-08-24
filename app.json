@@ -42,6 +42,14 @@
       "expo-secure-store",
       "@react-native-community/datetimepicker",
       [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#00A651",
+          "defaultChannel": "nutriedu-reminders"
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "NutriEdu necesita acceso a tus fotos para seleccionar una imagen de comida.",

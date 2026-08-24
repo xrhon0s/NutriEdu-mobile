@@ -22,6 +22,7 @@ import { ErrorState, LoadingState } from '@/components/screen-state';
 import { theme } from '@/constants/nutriedu-theme';
 import { useAuth } from '@/context/auth-context';
 import { apiRequest } from '@/services/api';
+import { synchronizeLocalReminders } from '@/services/local-notifications';
 import { InAppNotification, NotificationListResponse, NotificationPreferences } from '@/types/api';
 
 type ViewMode = 'inbox' | 'preferences';
@@ -146,7 +147,23 @@ export default function NotificationsScreen() {
         body: JSON.stringify(preferences),
       });
       setPreferences(result);
-      setStatus(t('notifications.saved'));
+      try {
+        const reminderResult = await synchronizeLocalReminders(result, i18n.resolvedLanguage);
+        if (reminderResult.status === 'permission-denied') {
+          setStatus(t('notifications.savedPermissionDenied'));
+        } else if (reminderResult.status === 'unsupported') {
+          setStatus(t('notifications.savedWeb'));
+        } else if (reminderResult.skippedQuietHours) {
+          setStatus(t('notifications.savedWithSkipped', {
+            count: reminderResult.scheduledCount,
+            skipped: reminderResult.skippedQuietHours,
+          }));
+        } else {
+          setStatus(t('notifications.savedWithReminders', { count: reminderResult.scheduledCount }));
+        }
+      } catch {
+        setStatus(t('notifications.savedSchedulingError'));
+      }
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : t('notifications.saveError'));
     } finally {
@@ -319,7 +336,7 @@ export default function NotificationsScreen() {
               </View>
               <Pressable accessibilityRole="button" disabled={saving} onPress={savePreferences} style={({ pressed }) => [styles.saveButton, saving && styles.disabled, pressed && styles.pressed]}>
                 <Ionicons name="save-outline" size={19} color="#FFFFFF" />
-                <Text style={styles.saveButtonText}>{saving ? t('notifications.saving') : t('notifications.save')}</Text>
+                <Text style={styles.saveButtonText}>{saving ? t('notifications.saving') : t('notifications.saveAndSchedule')}</Text>
               </Pressable>
             </View>
           ) : null}

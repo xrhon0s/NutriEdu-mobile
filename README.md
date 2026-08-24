@@ -53,6 +53,7 @@ Implementado:
 - cierre de sesion y borrado del JWT local despues de eliminar la cuenta;
 - bandeja de notificaciones con paginacion, no leidas, marcar una o todas y navegacion interna segura;
 - preferencias de notificacion por categoria, selector buscable de zona horaria IANA, horas silenciosas y horarios de comidas, plan y compras;
+- recordatorios locales diarios y semanales con permiso explicito, reprogramacion, horas silenciosas y navegacion al tocar el aviso;
 - eventos internos de bienvenida y actualizacion del plan sin push ni costo externo;
 - extraccion de desarrollo para probar el flujo medico sin IA ni costo;
 - invalidacion visual de scores y alertas mientras existan correcciones pendientes;
@@ -61,10 +62,10 @@ Implementado:
 
 Siguiente bloque:
 
-- inspeccionar Supabase y usar `migrate:baseline` para `005`/`006` si ya existen; ejecutar SQL solo para versiones realmente ausentes;
+- inspeccionar Supabase y registrar o aplicar solo migraciones que superen la verificacion correspondiente;
 - definir contenido localizado para catalogos, recetas y alertas del backend antes de habilitar ingles;
 - completar la migracion i18n de autenticacion, perfil, analisis, plan, compras y documentos;
-- probar la bandeja y luego evaluar recordatorios locales, todavia sin push remoto.
+- probar recordatorios locales en un development build real, todavia sin push remoto.
 
 ## Requisitos
 
@@ -124,7 +125,7 @@ La identidad nativa reservada es `com.xrhon0s.nutriedu` para Android e iOS. `eas
 - `preview`: APK/distribucion interna para aceptacion;
 - `production`: build de stores con version incremental administrada por EAS.
 
-Antes del primer development build se deben instalar `expo-dev-client` y los modulos nativos requeridos. Despues se autentica EAS y se vincula el proyecto, sin guardar tokens en el repositorio:
+`expo-dev-client` y los modulos nativos de notificaciones ya estan instalados. Para producir el primer development build se autentica EAS y se vincula el proyecto, sin guardar tokens en el repositorio:
 
 ```bash
 npx eas-cli login
