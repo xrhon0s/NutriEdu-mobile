@@ -52,7 +52,7 @@ Implementado:
 - eliminacion permanente de cuenta con contrasena, checkbox y confirmacion nativa;
 - cierre de sesion y borrado del JWT local despues de eliminar la cuenta;
 - bandeja de notificaciones con paginacion, no leidas, marcar una o todas y navegacion interna segura;
-- preferencias de notificacion por categoria, selector buscable de zona horaria IANA y horas silenciosas;
+- preferencias de notificacion por categoria, selector buscable de zona horaria IANA, horas silenciosas y horarios de comidas, plan y compras;
 - eventos internos de bienvenida y actualizacion del plan sin push ni costo externo;
 - extraccion de desarrollo para probar el flujo medico sin IA ni costo;
 - invalidacion visual de scores y alertas mientras existan correcciones pendientes;
@@ -61,7 +61,7 @@ Implementado:
 
 Siguiente bloque:
 
-- autenticar el runner contra Supabase y ejecutar `npm run migrate -- 005 006` desde el backend;
+- inspeccionar Supabase y usar `migrate:baseline` para `005`/`006` si ya existen; ejecutar SQL solo para versiones realmente ausentes;
 - definir contenido localizado para catalogos, recetas y alertas del backend antes de habilitar ingles;
 - completar la migracion i18n de autenticacion, perfil, analisis, plan, compras y documentos;
 - probar la bandeja y luego evaluar recordatorios locales, todavia sin push remoto.
@@ -115,6 +115,24 @@ npm run typecheck
 npm run lint
 npx expo export --platform all
 ```
+
+## Builds nativos con EAS
+
+La identidad nativa reservada es `com.xrhon0s.nutriedu` para Android e iOS. `eas.json` separa tres perfiles:
+
+- `development`: cliente interno para probar modulos nativos;
+- `preview`: APK/distribucion interna para aceptacion;
+- `production`: build de stores con version incremental administrada por EAS.
+
+Antes del primer development build se deben instalar `expo-dev-client` y los modulos nativos requeridos. Despues se autentica EAS y se vincula el proyecto, sin guardar tokens en el repositorio:
+
+```bash
+npx eas-cli login
+npx eas-cli init
+npx eas-cli build --profile development --platform android
+```
+
+Las variables publicas por ambiente se configuran en EAS; `EXPO_PUBLIC_API_URL` puede formar parte del bundle, pero nunca debe contener secretos.
 
 ## Estructura inicial
 

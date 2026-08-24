@@ -8,9 +8,14 @@
     "scheme": "nutriedu",
     "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.xrhon0s.nutriedu",
+      "buildNumber": "1",
+      "supportsTablet": false
     },
     "android": {
+      "package": "com.xrhon0s.nutriedu",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#EAF7EF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -48,6 +53,9 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
   }
 }

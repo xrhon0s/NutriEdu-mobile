@@ -274,6 +274,49 @@ export default function NotificationsScreen() {
                   </View>
                 ))}
               </View>
+              <Text style={styles.sectionTitle}>{t('notifications.scheduleTitle')}</Text>
+              <Text style={styles.fieldDescription}>{t('notifications.scheduleDescription')}</Text>
+              <View style={styles.scheduleList}>
+                {preferences.mealReminders ? (
+                  <View style={styles.scheduleGroup}>
+                    <View style={styles.scheduleHeading}>
+                      <Ionicons name="restaurant-outline" size={19} color={theme.colors.primary} />
+                      <Text style={styles.preferenceLabel}>{t('notifications.mealSchedule')}</Text>
+                    </View>
+                    <View style={styles.mealTimes}>
+                      {(['breakfast', 'lunch', 'dinner'] as const).map((meal) => (
+                        <View key={meal} style={styles.mealTime}>
+                          <Text style={styles.timeLabel}>{t(`notifications.${meal}`)}</Text>
+                          <TimeSelect
+                            value={preferences.mealReminderTimes[meal]}
+                            onChange={(value) => updatePreference('mealReminderTimes', { ...preferences.mealReminderTimes, [meal]: value })}
+                          />
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                ) : null}
+                {preferences.weeklyPlan ? (
+                  <WeeklySchedule
+                    icon="calendar-outline"
+                    title={t('notifications.weeklyPlanSchedule')}
+                    day={preferences.weeklyPlanReminderDay}
+                    time={preferences.weeklyPlanReminderTime}
+                    onDayChange={(value) => updatePreference('weeklyPlanReminderDay', value)}
+                    onTimeChange={(value) => updatePreference('weeklyPlanReminderTime', value)}
+                  />
+                ) : null}
+                {preferences.shopping ? (
+                  <WeeklySchedule
+                    icon="cart-outline"
+                    title={t('notifications.shoppingSchedule')}
+                    day={preferences.shoppingReminderDay}
+                    time={preferences.shoppingReminderTime}
+                    onDayChange={(value) => updatePreference('shoppingReminderDay', value)}
+                    onTimeChange={(value) => updatePreference('shoppingReminderTime', value)}
+                  />
+                ) : null}
+              </View>
               <Pressable accessibilityRole="button" disabled={saving} onPress={savePreferences} style={({ pressed }) => [styles.saveButton, saving && styles.disabled, pressed && styles.pressed]}>
                 <Ionicons name="save-outline" size={19} color="#FFFFFF" />
                 <Text style={styles.saveButtonText}>{saving ? t('notifications.saving') : t('notifications.save')}</Text>
@@ -283,6 +326,95 @@ export default function NotificationsScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+  );
+}
+
+function WeeklySchedule({ icon, title, day, time, onDayChange, onTimeChange }: {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  title: string;
+  day: number;
+  time: string;
+  onDayChange: (value: number) => void;
+  onTimeChange: (value: string) => void;
+}) {
+  return (
+    <View style={styles.scheduleGroup}>
+      <View style={styles.scheduleHeading}>
+        <Ionicons name={icon} size={19} color={theme.colors.primary} />
+        <Text style={styles.preferenceLabel}>{title}</Text>
+      </View>
+      <WeekdaySelect value={day} onChange={onDayChange} />
+      <View style={styles.singleTime}><TimeSelect value={time} onChange={onTimeChange} /></View>
+    </View>
+  );
+}
+
+function WeekdaySelect({ value, onChange }: { value: number; onChange: (value: number) => void }) {
+  const { t } = useTranslation();
+  const labels = [
+    t('notifications.weekdays.sundayShort'), t('notifications.weekdays.mondayShort'),
+    t('notifications.weekdays.tuesdayShort'), t('notifications.weekdays.wednesdayShort'),
+    t('notifications.weekdays.thursdayShort'), t('notifications.weekdays.fridayShort'),
+    t('notifications.weekdays.saturdayShort'),
+  ];
+  return (
+    <View accessibilityRole="radiogroup" style={styles.weekdays}>
+      {labels.map((label, index) => (
+        <Pressable
+          key={index}
+          accessibilityRole="radio"
+          accessibilityState={{ checked: value === index }}
+          onPress={() => onChange(index)}
+          style={({ pressed }) => [styles.weekday, value === index && styles.selectedWeekday, pressed && styles.pressed]}>
+          <Text style={[styles.weekdayText, value === index && styles.selectedWeekdayText]}>{label}</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+const timeOptions = Array.from({ length: 48 }, (_, index) => {
+  const hour = Math.floor(index / 2).toString().padStart(2, '0');
+  return `${hour}:${index % 2 ? '30' : '00'}`;
+});
+
+function TimeSelect({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(true)} style={({ pressed }) => [styles.timeButton, pressed && styles.pressed]}>
+        <Ionicons name="time-outline" size={18} color={theme.colors.primary} />
+        <Text style={styles.timeValue}>{value}</Text>
+      </Pressable>
+      <Modal visible={open} animationType="slide" transparent onRequestClose={() => setOpen(false)}>
+        <View style={styles.modalOverlay}>
+          <SafeAreaView style={styles.timeModal} edges={['bottom']}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('notifications.selectTime')}</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel={t('notifications.closeTime')} onPress={() => setOpen(false)} style={styles.closeButton}>
+                <Ionicons name="close" size={23} color={theme.colors.text} />
+              </Pressable>
+            </View>
+            <FlatList
+              data={timeOptions}
+              keyExtractor={(item) => item}
+              numColumns={3}
+              contentContainerStyle={styles.timeOptions}
+              renderItem={({ item }) => (
+                <Pressable
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: item === value }}
+                  onPress={() => { onChange(item); setOpen(false); }}
+                  style={({ pressed }) => [styles.timeOption, item === value && styles.selectedTime, pressed && styles.pressed]}>
+                  <Text style={[styles.timeOptionText, item === value && styles.selectedTimeText]}>{item}</Text>
+                </Pressable>
+              )}
+            />
+          </SafeAreaView>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -389,7 +521,17 @@ const mergeNotifications = (current: InAppNotification[], incoming: InAppNotific
 
 const validPreferences = (preferences: NotificationPreferences) => {
   const validTime = (value: string | null) => !value || /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
-  return Boolean(preferences.timezone.trim()) && validTime(preferences.quietStart) && validTime(preferences.quietEnd);
+  const scheduleTimes = [
+    ...Object.values(preferences.mealReminderTimes),
+    preferences.weeklyPlanReminderTime,
+    preferences.shoppingReminderTime,
+  ];
+  return Boolean(preferences.timezone.trim())
+    && validTime(preferences.quietStart)
+    && validTime(preferences.quietEnd)
+    && scheduleTimes.every((value) => validTime(value))
+    && [preferences.weeklyPlanReminderDay, preferences.shoppingReminderDay]
+      .every((day) => Number.isInteger(day) && day >= 0 && day <= 6);
 };
 
 const notificationCopy = (notification: InAppNotification, t: (key: string) => string) => {
@@ -467,6 +609,26 @@ const styles = StyleSheet.create({
   preferenceLabel: { color: theme.colors.text, fontSize: 14, fontWeight: '800' },
   preferenceDescription: { color: theme.colors.textMuted, fontSize: 12, lineHeight: 16, marginTop: 3 },
   switchColumn: { width: 52, flexShrink: 0, alignItems: 'flex-end', justifyContent: 'center' },
+  scheduleList: { borderTopWidth: 1, borderTopColor: theme.colors.border },
+  scheduleGroup: { gap: 10, borderBottomWidth: 1, borderBottomColor: theme.colors.border, paddingVertical: 14 },
+  scheduleHeading: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  mealTimes: { flexDirection: 'row', gap: 8 },
+  mealTime: { flex: 1, minWidth: 0, gap: 6 },
+  timeLabel: { color: theme.colors.textMuted, fontSize: 11, fontWeight: '700' },
+  singleTime: { width: 116 },
+  weekdays: { flexDirection: 'row', gap: 4 },
+  weekday: { flex: 1, minWidth: 0, height: 38, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.small, backgroundColor: theme.colors.surface },
+  selectedWeekday: { borderColor: theme.colors.primary, backgroundColor: theme.colors.surfaceMuted },
+  weekdayText: { color: theme.colors.textMuted, fontSize: 10, fontWeight: '800' },
+  selectedWeekdayText: { color: theme.colors.primaryPressed },
+  timeButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.small, backgroundColor: theme.colors.surface, paddingHorizontal: 7 },
+  timeValue: { color: theme.colors.text, fontSize: 13, fontWeight: '800' },
+  timeModal: { height: '66%', backgroundColor: theme.colors.background, borderTopLeftRadius: theme.radius.medium, borderTopRightRadius: theme.radius.medium },
+  timeOptions: { paddingHorizontal: theme.spacing.lg, paddingBottom: 24 },
+  timeOption: { flex: 1, height: 46, alignItems: 'center', justifyContent: 'center', margin: 3, borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.small, backgroundColor: theme.colors.surface },
+  selectedTime: { borderColor: theme.colors.primary, backgroundColor: theme.colors.surfaceMuted },
+  timeOptionText: { color: theme.colors.text, fontSize: 13, fontWeight: '700' },
+  selectedTimeText: { color: theme.colors.primaryPressed },
   timezoneButton: { minHeight: 58, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.small, backgroundColor: theme.colors.surface, paddingHorizontal: 12, paddingVertical: 8 },
   timezoneText: { flex: 1, minWidth: 0 },
   timezoneLabel: { color: theme.colors.text, fontSize: 14, fontWeight: '800' },

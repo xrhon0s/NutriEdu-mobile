@@ -51,6 +51,15 @@ export type NotificationPreferences = {
   shopping: boolean;
   progress: boolean;
   security: boolean;
+  mealReminderTimes: {
+    breakfast: string;
+    lunch: string;
+    dinner: string;
+  };
+  weeklyPlanReminderDay: number;
+  weeklyPlanReminderTime: string;
+  shoppingReminderDay: number;
+  shoppingReminderTime: string;
   updatedAt: string;
 };
 
