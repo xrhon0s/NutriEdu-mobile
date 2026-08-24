@@ -139,9 +139,20 @@ Las variables publicas por ambiente se configuran en EAS; `EXPO_PUBLIC_API_URL` 
 
 - Android funciona durante desarrollo mediante Expo Go.
 - La configuracion EAS, `expo-dev-client`, notificaciones nativas e identidades de Android/iOS estan preparadas localmente.
-- La cuenta Expo todavia no esta autenticada en esta maquina (`npx eas-cli whoami` devuelve `Not logged in`).
-- El proyecto aun no esta vinculado a EAS y no existe un APK/AAB independiente generado.
-- El siguiente gate es completar `npx eas-cli login`, ejecutar `npx eas-cli init` y crear el build Android `development`.
+- La maquina esta autenticada como `apol0x` y el proyecto esta vinculado a [`@apol0x/nutriedu-mobile`](https://expo.dev/accounts/apol0x/projects/nutriedu-mobile).
+- EAS administra el `versionCode` remoto y las credenciales Android; el primer keystore ya fue creado.
+- El primer build Android `development` fue enviado con ID `75dec52a-0a97-45b6-9d29-d94b333eaf20` y puede seguirse en [EAS Build](https://expo.dev/accounts/apol0x/projects/nutriedu-mobile/builds/75dec52a-0a97-45b6-9d29-d94b333eaf20).
+- El development client carga JavaScript desde Metro y usa el `EXPO_PUBLIC_API_URL` del `.env` local; no es un APK autonomo de produccion.
+- `preview` y `production` no deben generarse hasta desplegar el backend actual: Render aun devuelve `404` para profile, notifications y food-analysis.
+- Los canales OTA se mantienen fuera de `eas.json` hasta instalar y configurar `expo-updates` de forma deliberada.
+
+Despues de instalar el development client en Android, se inicia Metro con:
+
+```bash
+npx expo start --dev-client
+```
+
+El telefono y la maquina deben compartir red, y el backend local debe ser accesible mediante la IP configurada en `.env`.
 
 ## Estructura inicial
 

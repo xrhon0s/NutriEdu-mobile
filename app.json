@@ -15,7 +15,6 @@
     },
     "android": {
       "package": "com.xrhon0s.nutriedu",
-      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#EAF7EF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -64,6 +63,13 @@
     },
     "runtimeVersion": {
       "policy": "appVersion"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "8e9d3e40-5629-4f26-97c1-a55cd6bb80b8"
+      }
+    },
+    "owner": "apol0x"
   }
 }
