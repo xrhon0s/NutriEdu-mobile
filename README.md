@@ -135,6 +135,14 @@ npx eas-cli build --profile development --platform android
 
 Las variables publicas por ambiente se configuran en EAS; `EXPO_PUBLIC_API_URL` puede formar parte del bundle, pero nunca debe contener secretos.
 
+### Estado actual de distribucion
+
+- Android funciona durante desarrollo mediante Expo Go.
+- La configuracion EAS, `expo-dev-client`, notificaciones nativas e identidades de Android/iOS estan preparadas localmente.
+- La cuenta Expo todavia no esta autenticada en esta maquina (`npx eas-cli whoami` devuelve `Not logged in`).
+- El proyecto aun no esta vinculado a EAS y no existe un APK/AAB independiente generado.
+- El siguiente gate es completar `npx eas-cli login`, ejecutar `npx eas-cli init` y crear el build Android `development`.
+
 ## Estructura inicial
 
 ```txt
