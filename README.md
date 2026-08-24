@@ -141,7 +141,7 @@ Las variables publicas por ambiente se configuran en EAS; `EXPO_PUBLIC_API_URL` 
 - La configuracion EAS, `expo-dev-client`, notificaciones nativas e identidades de Android/iOS estan preparadas localmente.
 - La maquina esta autenticada como `apol0x` y el proyecto esta vinculado a [`@apol0x/nutriedu-mobile`](https://expo.dev/accounts/apol0x/projects/nutriedu-mobile).
 - EAS administra el `versionCode` remoto y las credenciales Android; el primer keystore ya fue creado.
-- El primer build Android `development` fue enviado con ID `75dec52a-0a97-45b6-9d29-d94b333eaf20` y puede seguirse en [EAS Build](https://expo.dev/accounts/apol0x/projects/nutriedu-mobile/builds/75dec52a-0a97-45b6-9d29-d94b333eaf20).
+- El primer build Android `development` finalizo correctamente con ID `75dec52a-0a97-45b6-9d29-d94b333eaf20`; el APK se descarga desde [EAS Build](https://expo.dev/accounts/apol0x/projects/nutriedu-mobile/builds/75dec52a-0a97-45b6-9d29-d94b333eaf20).
 - El development client carga JavaScript desde Metro y usa el `EXPO_PUBLIC_API_URL` del `.env` local; no es un APK autonomo de produccion.
 - `preview` y `production` no deben generarse hasta desplegar el backend actual: Render aun devuelve `404` para profile, notifications y food-analysis.
 - Los canales OTA se mantienen fuera de `eas.json` hasta instalar y configurar `expo-updates` de forma deliberada.
@@ -153,6 +153,23 @@ npx expo start --dev-client
 ```
 
 El telefono y la maquina deben compartir red, y el backend local debe ser accesible mediante la IP configurada en `.env`.
+
+### Instalar y probar el development build en Android
+
+1. Abrir el enlace de EAS Build desde el telefono Android y descargar el APK.
+2. Autorizar temporalmente la instalacion desde el navegador o gestor de archivos cuando Android lo solicite.
+3. Instalar y abrir NutriEdu. Esta version contiene `expo-dev-client`, por lo que espera un servidor Metro.
+4. En la maquina, confirmar que el backend corre y que `.env` contiene una IP LAN alcanzable desde el telefono.
+5. Iniciar Metro:
+
+```bash
+npx expo start --dev-client
+```
+
+6. Escanear el QR o abrir el proyecto desde el launcher de NutriEdu.
+7. Probar Preferencias > Notificaciones: guardar horarios, aceptar el permiso y confirmar que el aviso abre Plan o Compras.
+
+El artefacto de EAS expira el 7 de septiembre de 2026. El registro del build permanece en el proyecto, pero despues de esa fecha puede ser necesario generar otro APK.
 
 ## Estructura inicial
 
