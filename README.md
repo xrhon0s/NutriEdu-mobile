@@ -65,12 +65,12 @@ Siguiente bloque:
 - inspeccionar Supabase y registrar o aplicar solo migraciones que superen la verificacion correspondiente;
 - definir contenido localizado para catalogos, recetas y alertas del backend antes de habilitar ingles;
 - completar la migracion i18n de autenticacion, perfil, analisis, plan, compras y documentos;
-- probar recordatorios locales en un development build real, todavia sin push remoto.
+- completar la aceptacion de recordatorios locales en Android e iOS, todavia sin push remoto.
 
 ## Requisitos
 
 - Node.js LTS;
-- Expo Go en Android o iOS, o un simulador local;
+- NutriEdu development build en Android para validar modulos nativos; Expo Go puede usarse solo para flujos compatibles;
 - backend NutriEdu accesible desde el dispositivo.
 
 ## Configuracion
@@ -137,7 +137,7 @@ Las variables publicas por ambiente se configuran en EAS; `EXPO_PUBLIC_API_URL` 
 
 ### Estado actual de distribucion
 
-- Android funciona durante desarrollo mediante Expo Go.
+- Android funciona durante desarrollo mediante el development build de NutriEdu conectado a Metro.
 - La configuracion EAS, `expo-dev-client`, notificaciones nativas e identidades de Android/iOS estan preparadas localmente.
 - La maquina esta autenticada como `apol0x` y el proyecto esta vinculado a [`@apol0x/nutriedu-mobile`](https://expo.dev/accounts/apol0x/projects/nutriedu-mobile).
 - EAS administra el `versionCode` remoto y las credenciales Android; el primer keystore ya fue creado.
@@ -167,7 +167,10 @@ npx expo start --dev-client
 ```
 
 6. Escanear el QR o abrir el proyecto desde el launcher de NutriEdu.
-7. Probar Preferencias > Notificaciones: guardar horarios, aceptar el permiso y confirmar que el aviso abre Plan o Compras.
+7. En Preferencias > Notificaciones, usar **Probar notificacion ahora** y confirmar el aviso de cinco segundos.
+8. Guardar horarios y confirmar que un recordatorio real abre Plan o Compras.
+
+Android 12 o posterior requiere `android.permission.SCHEDULE_EXACT_ALARM` para avisos programados a una hora exacta. La configuracion nativa ya declara ese permiso, pero cualquier cambio en `app.json` requiere generar e instalar un APK nuevo. La prueba de cinco segundos usa un intervalo corto para diagnosticar por separado el permiso general, el canal y la presentacion del aviso.
 
 NutriEdu development client y Expo Go son aplicaciones distintas. El mensaje `Project is incompatible with this version of Expo Go` demuestra que el enlace se abrio con Expo Go: cerrar esa aplicacion y abrir directamente **NutriEdu** desde el launcher de Android. Si Android pregunta con que aplicacion abrir el enlace, elegir NutriEdu, no Expo Go.
 

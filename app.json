@@ -15,6 +15,9 @@
     },
     "android": {
       "package": "com.xrhon0s.nutriedu",
+      "permissions": [
+        "android.permission.SCHEDULE_EXACT_ALARM"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#EAF7EF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -45,7 +48,7 @@
         {
           "icon": "./assets/images/notification-icon.png",
           "color": "#00A651",
-          "defaultChannel": "nutriedu-reminders"
+          "defaultChannel": "nutriedu-reminders-v2"
         }
       ],
       [

@@ -2,7 +2,7 @@ import { Platform } from 'react-native';
 import type { NotificationResponse } from 'expo-notifications';
 import { NotificationPreferences } from '@/types/api';
 
-const CHANNEL_ID = 'nutriedu-reminders';
+const CHANNEL_ID = 'nutriedu-reminders-v2';
 const LOCAL_REMINDER_SOURCE = 'nutriedu-local-reminder';
 
 type ReminderDestination = '/plan' | '/shopping';
@@ -13,6 +13,13 @@ export type LocalReminderSyncResult = {
   scheduledCount: number;
   skippedQuietHours: number;
 };
+
+export type LocalNotificationTestResult = {
+  status: 'scheduled' | 'permission-denied' | 'unsupported';
+  scheduledCount: number;
+};
+
+type NotificationsModule = typeof import('expo-notifications');
 
 type ReminderDefinition = {
   id: string;
@@ -95,26 +102,7 @@ export const synchronizeLocalReminders = async (
     return { status: 'scheduled', scheduledCount: 0, skippedQuietHours: 0 };
   }
 
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
-      name: 'Recordatorios NutriEdu',
-      description: 'Recordatorios de comidas, plan semanal y compras.',
-      importance: Notifications.AndroidImportance.DEFAULT,
-      enableVibrate: true,
-      vibrationPattern: [0, 250, 150, 250],
-      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
-      showBadge: false,
-      sound: null,
-    });
-  }
-
-  let permission = await Notifications.getPermissionsAsync();
-  if (!permission.granted) {
-    permission = await Notifications.requestPermissionsAsync({
-      ios: { allowAlert: true, allowBadge: false, allowSound: false },
-    });
-  }
-  if (!permission.granted) {
+  if (!await prepareLocalNotifications(Notifications)) {
     return { status: 'permission-denied', scheduledCount: 0, skippedQuietHours: 0 };
   }
 
@@ -158,6 +146,65 @@ export const synchronizeLocalReminders = async (
   }
 
   return { status: 'scheduled', scheduledCount, skippedQuietHours };
+};
+
+export const scheduleLocalNotificationTest = async (
+  language: string | undefined,
+): Promise<LocalNotificationTestResult> => {
+  if (Platform.OS === 'web') {
+    return { status: 'unsupported', scheduledCount: 0 };
+  }
+  const Notifications = await import('expo-notifications');
+  if (!await prepareLocalNotifications(Notifications)) {
+    return { status: 'permission-denied', scheduledCount: 0 };
+  }
+
+  const isEnglish = language === 'en';
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: isEnglish ? 'NutriEdu notification test' : 'Prueba de notificacion NutriEdu',
+      body: isEnglish ? 'Local notifications are working on this device.' : 'Las notificaciones locales funcionan en este dispositivo.',
+      data: {
+        source: LOCAL_REMINDER_SOURCE,
+        reminderId: 'diagnostic-test',
+        destination: '/plan',
+      },
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+      channelId: CHANNEL_ID,
+      seconds: 5,
+      repeats: false,
+    },
+  });
+
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  return {
+    status: 'scheduled',
+    scheduledCount: scheduled.filter(({ content }) => content.data?.source === LOCAL_REMINDER_SOURCE).length,
+  };
+};
+
+const prepareLocalNotifications = async (Notifications: NotificationsModule) => {
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
+      name: 'Recordatorios NutriEdu',
+      description: 'Recordatorios de comidas, plan semanal y compras.',
+      importance: Notifications.AndroidImportance.HIGH,
+      enableVibrate: true,
+      vibrationPattern: [0, 250, 150, 250],
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
+      showBadge: false,
+    });
+  }
+
+  let permission = await Notifications.getPermissionsAsync();
+  if (!permission.granted) {
+    permission = await Notifications.requestPermissionsAsync({
+      ios: { allowAlert: true, allowBadge: false, allowSound: false },
+    });
+  }
+  return permission.granted;
 };
 
 const buildReminderDefinitions = (

@@ -22,7 +22,7 @@ import { ErrorState, LoadingState } from '@/components/screen-state';
 import { theme } from '@/constants/nutriedu-theme';
 import { useAuth } from '@/context/auth-context';
 import { apiRequest } from '@/services/api';
-import { synchronizeLocalReminders } from '@/services/local-notifications';
+import { scheduleLocalNotificationTest, synchronizeLocalReminders } from '@/services/local-notifications';
 import { InAppNotification, NotificationListResponse, NotificationPreferences } from '@/types/api';
 
 type ViewMode = 'inbox' | 'preferences';
@@ -50,6 +50,7 @@ export default function NotificationsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [testingNotification, setTestingNotification] = useState(false);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
 
@@ -168,6 +169,27 @@ export default function NotificationsScreen() {
       setError(requestError instanceof Error ? requestError.message : t('notifications.saveError'));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const testNotification = async () => {
+    try {
+      setTestingNotification(true);
+      setError('');
+      setStatus('');
+      const result = await scheduleLocalNotificationTest(i18n.resolvedLanguage);
+      if (result.status === 'permission-denied') {
+        setStatus(t('notifications.testPermissionDenied'));
+      } else if (result.status === 'unsupported') {
+        setStatus(t('notifications.testUnsupported'));
+      } else {
+        setStatus(t('notifications.testScheduled', { count: result.scheduledCount }));
+      }
+    } catch (testError) {
+      const message = testError instanceof Error ? testError.message : t('notifications.testUnknownError');
+      setError(t('notifications.testError', { message }));
+    } finally {
+      setTestingNotification(false);
     }
   };
 
@@ -337,6 +359,12 @@ export default function NotificationsScreen() {
               <Pressable accessibilityRole="button" disabled={saving} onPress={savePreferences} style={({ pressed }) => [styles.saveButton, saving && styles.disabled, pressed && styles.pressed]}>
                 <Ionicons name="save-outline" size={19} color="#FFFFFF" />
                 <Text style={styles.saveButtonText}>{saving ? t('notifications.saving') : t('notifications.saveAndSchedule')}</Text>
+              </Pressable>
+              <Pressable accessibilityRole="button" disabled={testingNotification} onPress={testNotification} style={({ pressed }) => [styles.testButton, testingNotification && styles.disabled, pressed && styles.pressed]}>
+                {testingNotification
+                  ? <ActivityIndicator size="small" color={theme.colors.primary} />
+                  : <Ionicons name="notifications-outline" size={19} color={theme.colors.primary} />}
+                <Text style={styles.testButtonText}>{testingNotification ? t('notifications.testing') : t('notifications.testNow')}</Text>
               </Pressable>
             </View>
           ) : null}
@@ -665,6 +693,8 @@ const styles = StyleSheet.create({
   timezoneEmpty: { color: theme.colors.textMuted, textAlign: 'center', paddingVertical: 36 },
   saveButton: { minHeight: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: theme.radius.medium, backgroundColor: theme.colors.primary },
   saveButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '800' },
+  testButton: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: theme.colors.primary, borderRadius: theme.radius.medium, backgroundColor: theme.colors.surface },
+  testButtonText: { color: theme.colors.primary, fontSize: 14, fontWeight: '800' },
   disabled: { opacity: 0.55 },
   pressed: { opacity: 0.76 },
 });
