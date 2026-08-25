@@ -169,6 +169,8 @@ npx expo start --dev-client
 6. Escanear el QR o abrir el proyecto desde el launcher de NutriEdu.
 7. Probar Preferencias > Notificaciones: guardar horarios, aceptar el permiso y confirmar que el aviso abre Plan o Compras.
 
+NutriEdu development client y Expo Go son aplicaciones distintas. El mensaje `Project is incompatible with this version of Expo Go` demuestra que el enlace se abrio con Expo Go: cerrar esa aplicacion y abrir directamente **NutriEdu** desde el launcher de Android. Si Android pregunta con que aplicacion abrir el enlace, elegir NutriEdu, no Expo Go.
+
 El artefacto de EAS expira el 7 de septiembre de 2026. El registro del build permanece en el proyecto, pero despues de esa fecha puede ser necesario generar otro APK.
 
 ### Cuando el telefono no encuentra Metro
