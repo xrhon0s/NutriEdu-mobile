@@ -149,10 +149,10 @@ Las variables publicas por ambiente se configuran en EAS; `EXPO_PUBLIC_API_URL` 
 Despues de instalar el development client en Android, se inicia Metro con:
 
 ```bash
-npx expo start --dev-client
+npm run android:lan
 ```
 
-El telefono y la maquina deben compartir red, y el backend local debe ser accesible mediante la IP configurada en `.env`.
+Este comando detecta la IP privada actual del Mac, actualiza el `.env` local ignorado por Git, comprueba la API en el puerto `3002`, muestra la URL manual para Android e inicia Metro. El telefono y la maquina deben compartir red.
 
 ### Instalar y probar el development build en Android
 
@@ -160,10 +160,10 @@ El telefono y la maquina deben compartir red, y el backend local debe ser accesi
 2. Autorizar temporalmente la instalacion desde el navegador o gestor de archivos cuando Android lo solicite.
 3. Instalar y abrir NutriEdu. Esta version contiene `expo-dev-client`, por lo que espera un servidor Metro.
 4. En la maquina, confirmar que el backend corre y que `.env` contiene una IP LAN alcanzable desde el telefono.
-5. Iniciar Metro:
+5. Iniciar Metro y copiar la URL manual mostrada:
 
 ```bash
-npx expo start --dev-client
+npm run android:lan
 ```
 
 6. Escanear el QR o abrir el proyecto desde el launcher de NutriEdu.
