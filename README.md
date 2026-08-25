@@ -171,6 +171,22 @@ npx expo start --dev-client
 
 El artefacto de EAS expira el 7 de septiembre de 2026. El registro del build permanece en el proyecto, pero despues de esa fecha puede ser necesario generar otro APK.
 
+### Cuando el telefono no encuentra Metro
+
+La IP LAN puede cambiar al alternar entre Wi-Fi y hotspot. En macOS, obtener la direccion actual con:
+
+```bash
+ipconfig getifaddr en0
+```
+
+Usar esa misma IP en `.env` para `EXPO_PUBLIC_API_URL` y al iniciar Metro:
+
+```bash
+REACT_NATIVE_PACKAGER_HOSTNAME=<IP_LAN> npx expo start --dev-client
+```
+
+Desde el telefono, abrir `http://<IP_LAN>:3002/api/users/restrictions`. Una respuesta JSON o HTTP `401` demuestra que el backend es alcanzable. Luego introducir `http://<IP_LAN>:8081` en el launcher del development client. Si Metro no registra ningun intento, revisar que ambos dispositivos compartan Wi-Fi y que no exista VPN, red de invitados o aislamiento entre clientes.
+
 ## Estructura inicial
 
 ```txt
