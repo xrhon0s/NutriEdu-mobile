@@ -114,18 +114,18 @@ const emptyTargets: TargetsForm = {
 };
 
 const targetFields: { key: keyof TargetsForm; label: string; unit: string }[] = [
-  { key: 'calories_min', label: 'Calorias minimas', unit: 'kcal' },
-  { key: 'calories_max', label: 'Calorias maximas', unit: 'kcal' },
-  { key: 'protein_min_g', label: 'Proteina minima', unit: 'g' },
-  { key: 'protein_max_g', label: 'Proteina maxima', unit: 'g' },
-  { key: 'carbs_min_g', label: 'Carbohidratos minimos', unit: 'g' },
-  { key: 'carbs_max_g', label: 'Carbohidratos maximos', unit: 'g' },
-  { key: 'fat_min_g', label: 'Grasas minimas', unit: 'g' },
-  { key: 'fat_max_g', label: 'Grasas maximas', unit: 'g' },
-  { key: 'saturated_fat_max_g', label: 'Grasa saturada maxima', unit: 'g' },
-  { key: 'sugar_max_g', label: 'Azucar maxima', unit: 'g' },
-  { key: 'fiber_min_g', label: 'Fibra minima', unit: 'g' },
-  { key: 'sodium_max_mg', label: 'Sodio maximo', unit: 'mg' },
+  { key: 'calories_min', label: 'Calorias minimas diarias', unit: 'kcal' },
+  { key: 'calories_max', label: 'Calorias maximas diarias', unit: 'kcal' },
+  { key: 'protein_min_g', label: 'Proteina minima diaria', unit: 'g' },
+  { key: 'protein_max_g', label: 'Proteina maxima diaria', unit: 'g' },
+  { key: 'carbs_min_g', label: 'Carbohidratos minimos diarios', unit: 'g' },
+  { key: 'carbs_max_g', label: 'Carbohidratos maximos diarios', unit: 'g' },
+  { key: 'fat_min_g', label: 'Grasas minimas diarias', unit: 'g' },
+  { key: 'fat_max_g', label: 'Grasas maximas diarias', unit: 'g' },
+  { key: 'saturated_fat_max_g', label: 'Grasa saturada maxima diaria', unit: 'g' },
+  { key: 'sugar_max_g', label: 'Azucar maxima diaria', unit: 'g' },
+  { key: 'fiber_min_g', label: 'Fibra minima diaria', unit: 'g' },
+  { key: 'sodium_max_mg', label: 'Sodio maximo diario', unit: 'mg' },
   { key: 'water_min_ml', label: 'Agua minima diaria', unit: 'ml' },
 ];
 
@@ -560,7 +560,7 @@ function TargetsView({ form, setForm, saving, onSave }: {
   return (
     <View style={styles.panel}>
       <View style={styles.guidance}><Text style={styles.guidanceText}>Usa valores definidos con un profesional. Los campos vacios no generan alertas.</Text></View>
-      <FormSection title="Limites por comida">
+      <FormSection title="Metas y limites diarios">
         {targetFields.map((field) => (
           <FormField key={field.key} label={field.label} value={form[field.key]} unit={field.unit} keyboardType="decimal-pad" onChangeText={(value) => update(field.key, value)} />
         ))}

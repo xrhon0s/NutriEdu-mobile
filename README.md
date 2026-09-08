@@ -20,7 +20,7 @@ Implementado:
 - gestion y busqueda de condiciones clinicas y restricciones alimentarias;
 - edicion manual de metas y limites nutricionales;
 - navegacion inferior para perfil, recetas, analisis, plan y compras;
-- recetas recomendadas, ingredientes y evaluacion personalizada;
+- recetas recomendadas mediante ranking explicable por restricciones, objetivos, condiciones, metas y preferencias;
 - exploracion de recetas por nombre o descripcion, nivel de salud y rango de calorias;
 - paginacion de recetas en bloques de 12 con carga incremental, refresco y proteccion contra respuestas obsoletas;
 - filtros reutilizados en el selector de recetas del planificador;
@@ -63,6 +63,7 @@ Implementado:
 Siguiente bloque:
 
 - inspeccionar Supabase y registrar o aplicar solo migraciones que superen la verificacion correspondiente;
+- completar nutrientes y porciones auditables del catalogo de recetas para elevar la confianza del ranking;
 - definir contenido localizado para catalogos, recetas y alertas del backend antes de habilitar ingles;
 - completar la migracion i18n de autenticacion, perfil, analisis, plan, compras y documentos;
 - completar la aceptacion de recordatorios locales en Android e iOS, todavia sin push remoto.

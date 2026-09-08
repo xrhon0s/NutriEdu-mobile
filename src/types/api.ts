@@ -11,6 +11,16 @@ export type Recipe = {
   fiber_g?: string | null;
   sodium_mg?: string | null;
   hasUnsafeIngredients?: boolean;
+  recommendation?: RecipeRecommendation;
+};
+
+export type RecipeRecommendation = {
+  score: number;
+  status: 'suitable' | 'suitable_with_adjustments' | 'review_required';
+  confidence: number;
+  reasons: string[];
+  warnings: RecipeAlert[];
+  missingNutrients: string[];
 };
 
 export type RecipeSearchResponse = {
@@ -20,6 +30,7 @@ export type RecipeSearchResponse = {
     offset: number;
     nextOffset: number | null;
     hasMore: boolean;
+    total?: number;
   };
 };
 

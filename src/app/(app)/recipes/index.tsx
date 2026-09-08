@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { RecipeCard } from '@/components/recipe-card';
 import {
   emptyRecipeFilters,
+  countActiveRecipeFilters,
   RecipeFilterControls,
   RecipeFilters,
   validateRecipeFilters,
@@ -51,7 +52,7 @@ export default function RecipesScreen() {
       setError('');
       if (append) setLoadingMore(true);
       else setSearching(true);
-      const result = await apiRequest<RecipeSearchResponse>(buildSearchPath(user?.id, currentFilters, offset), { token, signal });
+      const result = await apiRequest<RecipeSearchResponse>(buildRecipesPath(user?.id, currentFilters, offset), { token, signal });
       if (requestId !== requestSequence.current) return;
       setRecipes((current) => append ? mergeRecipes(current, result.recipes) : result.recipes);
       setNextOffset(result.pagination.nextOffset);
@@ -134,7 +135,10 @@ export default function RecipesScreen() {
   );
 }
 
-const buildSearchPath = (userId: number | undefined, filters: RecipeFilters, offset: number) => {
+const buildRecipesPath = (userId: number | undefined, filters: RecipeFilters, offset: number) => {
+  if (countActiveRecipeFilters(filters) === 0) {
+    return `/recipes/recommendations?limit=${PAGE_SIZE}&offset=${offset}`;
+  }
   const params = [`query=${encodeURIComponent(filters.query.trim())}`, 'safe_only=true', 'paginated=true', `limit=${PAGE_SIZE}`, `offset=${offset}`];
   if (filters.health !== 'all') params.push(`nivel_salud=${filters.health}`);
   if (filters.caloriesMin) params.push(`calorias_min=${filters.caloriesMin}`);

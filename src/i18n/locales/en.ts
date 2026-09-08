@@ -127,6 +127,8 @@ export const en = {
       noDescription: 'No description available.',
       timePending: 'Time pending',
       evaluation: 'View evaluation',
+      match: 'Match {{score}}/100',
+      limitedData: 'Limited nutritional data',
     },
     detail: {
       loading: 'Evaluating recipe...',

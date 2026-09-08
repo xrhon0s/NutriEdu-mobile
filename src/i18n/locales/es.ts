@@ -127,6 +127,8 @@ export const es = {
       noDescription: 'Sin descripcion registrada.',
       timePending: 'Tiempo pendiente',
       evaluation: 'Ver evaluacion',
+      match: 'Afinidad {{score}}/100',
+      limitedData: 'Datos nutricionales limitados',
     },
     detail: {
       loading: 'Evaluando la receta...',
