@@ -116,6 +116,20 @@ npm run ios
 npm run web
 ```
 
+### Probar en un iPhone fisico con Expo Go
+
+NutriEdu usa Expo SDK 54. El numero visible de la aplicacion Expo Go, por ejemplo `57.0.9`, no debe confundirse con el SDK declarado por el proyecto. La version de App Store compatible con SDK 54 puede abrir este proyecto.
+
+Como NutriEdu incluye `expo-dev-client`, se debe forzar el modo Expo Go. Para probar con la API desplegada y sin ejecutar el backend local:
+
+```bash
+EXPO_PUBLIC_API_URL=https://nutriedu-backend.onrender.com/api npx expo start --go --lan --clear
+```
+
+El terminal debe mostrar `Using Expo Go` y una URL `exp://<IP_LAN>:8081`. El iPhone y el Mac deben compartir Wi-Fi; se escanea el QR con Camara o se introduce la URL en Expo Go. El terminal debe permanecer activo durante la prueba.
+
+Expo Go sirve para aceptar navegación, autenticación, perfil, recetas, plan, compras, cámara y documentos compatibles. Las notificaciones y la conducta nativa final deben validarse en un development build propio. Una instalación iOS distribuida mediante EAS requiere credenciales del Apple Developer Program; en un Mac también puede instalarse localmente con Xcode y el iPhone conectado.
+
 ## Validacion
 
 ```bash
@@ -153,6 +167,7 @@ Las variables publicas por ambiente se configuran en EAS; `EXPO_PUBLIC_API_URL` 
 - El primer build Android `development` finalizo correctamente con ID `75dec52a-0a97-45b6-9d29-d94b333eaf20`; su artefacto ya expiro y debe generarse un build nuevo para reinstalarlo.
 - El development client carga JavaScript desde Metro y usa el `EXPO_PUBLIC_API_URL` del `.env` local; no es un APK autonomo de produccion.
 - El backend productivo ya expone perfil, notificaciones, analisis y lista de compras detallada. Antes de cada build `preview` o `production` se debe ejecutar la matriz de aceptacion contra Render.
+- El build Android `preview` autónomo `e14617f8-5691-46fa-873d-0c075c508393` fue iniciado desde el commit `bca3c0c`; su estado y artefacto se consultan en [EAS Build](https://expo.dev/accounts/apol0x/projects/nutriedu-mobile/builds/e14617f8-5691-46fa-873d-0c075c508393).
 - Los canales OTA se mantienen fuera de `eas.json` hasta instalar y configurar `expo-updates` de forma deliberada.
 
 Despues de instalar el development client en Android, se inicia Metro con:
