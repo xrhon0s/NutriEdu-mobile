@@ -76,6 +76,44 @@ export type NotificationPreferences = {
 
 export type Ingredient = { id: number; nombre: string };
 
+export type SafetyIngredient = Ingredient & {
+  food_group?: string;
+  substitution_group?: string;
+};
+
+export type IngredientSubstitution = {
+  ingredienteOriginal: string;
+  substitutionGroup: string;
+  opciones: SafetyIngredient[];
+};
+
+export type RecipeSafetyResponse = {
+  unsafeIngredients: SafetyIngredient[];
+  substitutes: IngredientSubstitution[];
+};
+
+export type ShoppingListQuantity = {
+  amount: number;
+  unit: string;
+};
+
+export type ShoppingListItem = Ingredient & {
+  foodGroup: string;
+  knownAmountG: number | null;
+  plannedUses: number;
+  missingQuantityUses: number;
+  recipeCount: number;
+  sourceRecipes: string[];
+  quantities: ShoppingListQuantity[];
+};
+
+export type DetailedShoppingListResponse = {
+  items: ShoppingListItem[];
+  planSignature: string;
+  plannedMeals: number;
+  missingQuantityItems: number;
+};
+
 export type RecipeAlert = {
   source: string;
   sourceCode: string;

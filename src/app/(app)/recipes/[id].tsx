@@ -1,22 +1,31 @@
 import { useEffect, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { ErrorState, LoadingState } from '@/components/screen-state';
 import { theme } from '@/constants/nutriedu-theme';
 import { useAuth } from '@/context/auth-context';
 import { apiRequest } from '@/services/api';
-import { Ingredient, Recipe, RecipeAlert, RecipeEvaluation } from '@/types/api';
+import {
+  Ingredient,
+  IngredientSubstitution,
+  Recipe,
+  RecipeAlert,
+  RecipeEvaluation,
+  RecipeSafetyResponse,
+} from '@/types/api';
 
 export default function RecipeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const { t } = useTranslation();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [evaluation, setEvaluation] = useState<RecipeEvaluation | null>(null);
+  const [substitutes, setSubstitutes] = useState<IngredientSubstitution[]>([]);
+  const [showAlternatives, setShowAlternatives] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -26,12 +35,14 @@ export default function RecipeDetailScreen() {
       apiRequest<Recipe>(`/recipes/${id}`, { token }),
       apiRequest<Ingredient[]>(`/recipes/${id}/ingredients`, { token }),
       apiRequest<RecipeEvaluation>(`/recipes/evaluate/${id}`, { token }),
+      apiRequest<RecipeSafetyResponse>(`/recipes/check/${id}/${user?.id}`, { token }),
     ])
-      .then(([recipeResult, ingredientResult, evaluationResult]) => {
+      .then(([recipeResult, ingredientResult, evaluationResult, safetyResult]) => {
         if (!cancelled) {
           setRecipe(recipeResult);
           setIngredients(ingredientResult);
           setEvaluation(evaluationResult);
+          setSubstitutes(safetyResult.substitutes || []);
         }
       })
       .catch((requestError) => {
@@ -39,7 +50,7 @@ export default function RecipeDetailScreen() {
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [id, t, token]);
+  }, [id, t, token, user?.id]);
 
   if (loading) return <LoadingState label={t('recipes.detail.loading')} />;
   if (error || !recipe || !evaluation) return <ErrorState message={error || t('recipes.detail.notFound')} />;
@@ -70,10 +81,50 @@ export default function RecipeDetailScreen() {
 
         {evaluation.unsafeIngredients.length > 0 && (
           <View style={[styles.section, styles.dangerSection]}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.danger }]}>{t('recipes.detail.restrictedIngredients')}</Text>
+            <Text style={[styles.sectionTitle, { color: theme.colors.danger }]}>
+              {t('recipes.detail.restrictedCount', { count: evaluation.unsafeIngredients.length })}
+            </Text>
             {evaluation.unsafeIngredients.map((ingredient) => <Bullet key={ingredient.id} text={ingredient.nombre} danger />)}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ expanded: showAlternatives }}
+              onPress={() => setShowAlternatives((current) => !current)}
+              style={({ pressed }) => [styles.alternativesButton, pressed && styles.pressed]}
+            >
+              <Ionicons name="swap-horizontal-outline" size={19} color="#FFFFFF" />
+              <Text style={styles.alternativesButtonText}>
+                {t(showAlternatives ? 'recipes.detail.hideAlternatives' : 'recipes.detail.viewAlternatives')}
+              </Text>
+              <Ionicons name={showAlternatives ? 'chevron-up' : 'chevron-down'} size={18} color="#FFFFFF" />
+            </Pressable>
           </View>
         )}
+
+        {showAlternatives && evaluation.unsafeIngredients.length > 0 ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t('recipes.detail.alternativesTitle')}</Text>
+            <Text style={styles.sectionDescription}>{t('recipes.detail.alternativesDescription')}</Text>
+            {substitutes.map((substitution, index) => (
+              <View key={`${substitution.ingredienteOriginal}-${index}`} style={styles.substitutionBlock}>
+                <Text style={styles.substitutionOriginal}>
+                  {t('recipes.detail.replace', { ingredient: substitution.ingredienteOriginal })}
+                </Text>
+                {substitution.opciones.length ? (
+                  <View style={styles.optionList}>
+                    {substitution.opciones.map((option) => (
+                      <View key={option.id} style={styles.optionChip}>
+                        <Ionicons name="checkmark-circle-outline" size={16} color={theme.colors.primaryPressed} />
+                        <Text style={styles.optionText}>{option.nombre}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={styles.noAlternative}>{t('recipes.detail.noCloseAlternative')}</Text>
+                )}
+              </View>
+            ))}
+          </View>
+        ) : null}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('recipes.detail.ingredients')}</Text>
@@ -139,6 +190,15 @@ const styles = StyleSheet.create({
   section: { borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.medium, backgroundColor: theme.colors.surface, padding: theme.spacing.md, gap: 10 },
   dangerSection: { borderColor: '#F4B4AF', backgroundColor: theme.colors.dangerSurface },
   sectionTitle: { color: theme.colors.text, fontSize: 17, fontWeight: '800', marginBottom: 2 },
+  sectionDescription: { color: theme.colors.textMuted, lineHeight: 20 },
+  alternativesButton: { minHeight: 46, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: theme.radius.medium, backgroundColor: theme.colors.danger, paddingHorizontal: theme.spacing.md, marginTop: 4 },
+  alternativesButtonText: { flex: 1, color: '#FFFFFF', fontWeight: '800', textAlign: 'center' },
+  substitutionBlock: { borderTopWidth: 1, borderTopColor: theme.colors.border, paddingTop: 12, gap: 9 },
+  substitutionOriginal: { color: theme.colors.text, fontWeight: '800' },
+  optionList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  optionChip: { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: theme.radius.small, backgroundColor: theme.colors.surfaceMuted, paddingHorizontal: 10 },
+  optionText: { color: theme.colors.primaryPressed, fontWeight: '700' },
+  noAlternative: { color: theme.colors.textMuted, lineHeight: 20 },
   empty: { color: theme.colors.textMuted, lineHeight: 20 },
   bulletRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   bullet: { width: 6, height: 6, borderRadius: 3, backgroundColor: theme.colors.primary },
@@ -149,4 +209,5 @@ const styles = StyleSheet.create({
   alertValue: { color: theme.colors.textMuted, fontSize: 12, marginTop: 3 },
   notice: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderRadius: theme.radius.medium, backgroundColor: theme.colors.warningSurface, padding: theme.spacing.md },
   noticeText: { flex: 1, color: theme.colors.warning, lineHeight: 20 },
+  pressed: { opacity: 0.75 },
 });

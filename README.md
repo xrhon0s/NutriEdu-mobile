@@ -21,6 +21,7 @@ Implementado:
 - edicion manual de metas y limites nutricionales;
 - navegacion inferior para perfil, recetas, analisis, plan y compras;
 - recetas recomendadas mediante ranking explicable por restricciones, objetivos, condiciones, metas y preferencias;
+- detalle de receta con alertas y alternativas seguras limitadas a la misma funcion culinaria;
 - exploracion de recetas por nombre o descripcion, nivel de salud y rango de calorias;
 - paginacion de recetas en bloques de 12 con carga incremental, refresco y proteccion contra respuestas obsoletas;
 - filtros reutilizados en el selector de recetas del planificador;
@@ -28,7 +29,9 @@ Implementado:
 - recursos ingleses de navegacion, recetas y notificaciones conservados solo como trabajo de desarrollo, sin selector publico hasta completar UI, catalogos y mensajes del backend;
 - plan semanal editable con busqueda de recetas compatibles;
 - guardado atomico del plan y validacion de sus 21 espacios desde la API;
-- lista de compras sincronizada con el plan y estado local persistente;
+- lista de compras detallada, agrupada por familia alimentaria y sincronizada con el plan;
+- cantidades agregadas en gramos o unidades, recetas de origen y aviso de datos incompletos;
+- progreso de compras persistente por usuario y firma del plan, con vistas de todos o pendientes;
 - formularios ajustables al teclado para mantener visibles las busquedas inferiores;
 - captura desde camara o galeria con permisos, vista previa y validacion de imagen;
 - intake multipart autenticado sin retencion de la imagen;
@@ -64,8 +67,9 @@ Siguiente bloque:
 
 - inspeccionar Supabase y registrar o aplicar solo migraciones que superen la verificacion correspondiente;
 - completar nutrientes y porciones auditables del catalogo de recetas para elevar la confianza del ranking;
+- validar en dispositivo fisico compras detalladas y alternativas de recetas con un perfil restringido;
 - definir contenido localizado para catalogos, recetas y alertas del backend antes de habilitar ingles;
-- completar la migracion i18n de autenticacion, perfil, analisis, plan, compras y documentos;
+- completar la migracion i18n de autenticacion, perfil, analisis, plan y documentos;
 - completar la aceptacion de recordatorios locales en Android e iOS, todavia sin push remoto.
 
 ## Requisitos
@@ -142,9 +146,9 @@ Las variables publicas por ambiente se configuran en EAS; `EXPO_PUBLIC_API_URL` 
 - La configuracion EAS, `expo-dev-client`, notificaciones nativas e identidades de Android/iOS estan preparadas localmente.
 - La maquina esta autenticada como `apol0x` y el proyecto esta vinculado a [`@apol0x/nutriedu-mobile`](https://expo.dev/accounts/apol0x/projects/nutriedu-mobile).
 - EAS administra el `versionCode` remoto y las credenciales Android; el primer keystore ya fue creado.
-- El primer build Android `development` finalizo correctamente con ID `75dec52a-0a97-45b6-9d29-d94b333eaf20`; el APK se descarga desde [EAS Build](https://expo.dev/accounts/apol0x/projects/nutriedu-mobile/builds/75dec52a-0a97-45b6-9d29-d94b333eaf20).
+- El primer build Android `development` finalizo correctamente con ID `75dec52a-0a97-45b6-9d29-d94b333eaf20`; su artefacto ya expiro y debe generarse un build nuevo para reinstalarlo.
 - El development client carga JavaScript desde Metro y usa el `EXPO_PUBLIC_API_URL` del `.env` local; no es un APK autonomo de produccion.
-- `preview` y `production` no deben generarse hasta desplegar el backend actual: Render aun devuelve `404` para profile, notifications y food-analysis.
+- El backend productivo ya expone perfil, notificaciones, analisis y lista de compras detallada. Antes de cada build `preview` o `production` se debe ejecutar la matriz de aceptacion contra Render.
 - Los canales OTA se mantienen fuera de `eas.json` hasta instalar y configurar `expo-updates` de forma deliberada.
 
 Despues de instalar el development client en Android, se inicia Metro con:
@@ -175,7 +179,7 @@ Android 12 o posterior requiere `android.permission.SCHEDULE_EXACT_ALARM` para a
 
 NutriEdu development client y Expo Go son aplicaciones distintas. El mensaje `Project is incompatible with this version of Expo Go` demuestra que el enlace se abrio con Expo Go: cerrar esa aplicacion y abrir directamente **NutriEdu** desde el launcher de Android. Si Android pregunta con que aplicacion abrir el enlace, elegir NutriEdu, no Expo Go.
 
-El artefacto de EAS expira el 7 de septiembre de 2026. El registro del build permanece en el proyecto, pero despues de esa fecha puede ser necesario generar otro APK.
+El artefacto anterior expiro el 7 de septiembre de 2026. El registro permanece en EAS, pero para una nueva instalacion es necesario generar otro APK.
 
 ### Cuando el telefono no encuentra Metro
 
