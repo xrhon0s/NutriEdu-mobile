@@ -132,6 +132,8 @@ La identidad nativa reservada es `com.xrhon0s.nutriedu` para Android e iOS. `eas
 - `preview`: APK/distribucion interna para aceptacion;
 - `production`: build de stores con version incremental administrada por EAS.
 
+`preview` y `production` fijan `EXPO_PUBLIC_API_URL` al backend de Render en `eas.json`. Es una URL publica, no un secreto. `development` conserva la URL LAN del `.env` local ignorado por Git.
+
 `expo-dev-client` y los modulos nativos de notificaciones ya estan instalados. Para producir el primer development build se autentica EAS y se vincula el proyecto, sin guardar tokens en el repositorio:
 
 ```bash
