@@ -92,7 +92,7 @@ export default function ShoppingScreen() {
     ]);
 
     return { result, saved: parseStoredProgress(saved, result) };
-  }, [t, token, user?.id]);
+  }, [t, token, user]);
 
   const applyList = useCallback(({ result, saved }: { result: DetailedShoppingListResponse; saved: CheckedState }) => {
     setShoppingData(result);

@@ -30,6 +30,12 @@ type ReminderDefinition = {
   weekday?: number;
 };
 
+const permissionIsGranted = (permission: unknown) => {
+  if (!permission || typeof permission !== 'object') return false;
+  const response = permission as { granted?: boolean; status?: string };
+  return response.granted === true || response.status === 'granted';
+};
+
 const reminderCopy = {
   es: {
     breakfast: ['Hora de tu desayuno', 'Consulta tu plan antes de comenzar.'],
@@ -199,12 +205,12 @@ const prepareLocalNotifications = async (Notifications: NotificationsModule) => 
   }
 
   let permission = await Notifications.getPermissionsAsync();
-  if (!permission.granted) {
+  if (!permissionIsGranted(permission)) {
     permission = await Notifications.requestPermissionsAsync({
       ios: { allowAlert: true, allowBadge: false, allowSound: false },
     });
   }
-  return permission.granted;
+  return permissionIsGranted(permission);
 };
 
 const buildReminderDefinitions = (

@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -184,7 +184,7 @@ export default function ProfileScreen() {
       restrictions: allRestrictions.restrictions || [],
       selectedRestrictions: (userRestrictions.restrictions || []).map((item) => Number(item.restriccion_id)),
     };
-  }, [token, user?.id]);
+  }, [token, user]);
 
   const applyProfileData = useCallback((data: ProfileData) => {
     setProfile(profileToForm(data.saved.profile));
@@ -209,9 +209,9 @@ export default function ProfileScreen() {
     }
   }, [applyProfileData, fetchProfileData]);
 
-  useEffect(() => {
-    loadProfile();
-  }, [loadProfile]);
+  useFocusEffect(useCallback(() => {
+    void loadProfile();
+  }, [loadProfile]));
 
   const runSave = async (section: ProfileTab, action: () => Promise<unknown>, successMessage: string) => {
     try {

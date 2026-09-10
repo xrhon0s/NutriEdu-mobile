@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { theme } from '@/constants/nutriedu-theme';
@@ -30,13 +30,13 @@ export function FoodAnalysisReview({ analysis, evaluation, dirty, reviewing, onC
   const [newIngredient, setNewIngredient] = useState('');
   const [portionGrams, setPortionGrams] = useState(() => numberInputValue(analysis.portion.estimatedGrams));
   const [nutritionDrafts, setNutritionDrafts] = useState(() => nutritionInputValues(analysis));
+  const [previousAnalysis, setPreviousAnalysis] = useState(analysis);
 
-  useEffect(() => {
-    if (!dirty) {
-      setPortionGrams(numberInputValue(analysis.portion.estimatedGrams));
-      setNutritionDrafts(nutritionInputValues(analysis));
-    }
-  }, [dirty, analysis]);
+  if (!dirty && analysis !== previousAnalysis) {
+    setPreviousAnalysis(analysis);
+    setPortionGrams(numberInputValue(analysis.portion.estimatedGrams));
+    setNutritionDrafts(nutritionInputValues(analysis));
+  }
 
   const updateIngredient = (index: number, name: string) => {
     onChange({

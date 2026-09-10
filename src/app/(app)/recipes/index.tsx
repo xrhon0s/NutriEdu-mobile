@@ -69,7 +69,7 @@ export default function RecipesScreen() {
         setLoadingMore(false);
       }
     }
-  }, [t, token, user?.id]);
+  }, [t, token, user]);
 
   useEffect(() => {
     requestSequence.current += 1;

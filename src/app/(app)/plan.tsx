@@ -64,7 +64,7 @@ export default function PlanScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [t, token, user?.id]);
+  }, [t, token, user]);
 
   useFocusEffect(useCallback(() => {
     if (!dirty) void loadPlan();

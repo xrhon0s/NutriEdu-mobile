@@ -2,7 +2,7 @@
   "expo": {
     "name": "NutriEdu",
     "slug": "nutriedu-mobile",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "nutriedu",
@@ -58,7 +58,9 @@
           "cameraPermission": "NutriEdu necesita acceso a la camara para fotografiar una comida.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-font",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true,
