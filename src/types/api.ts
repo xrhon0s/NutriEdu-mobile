@@ -145,6 +145,8 @@ export type PlannedMeal = {
   calorias: string | number | null;
   tiempo_preparacion: number | null;
   nivel_salud: number;
+  unsafeIngredients?: SafetyIngredient[];
+  hasUnsafeIngredients?: boolean;
 };
 
 export type UserProfile = {

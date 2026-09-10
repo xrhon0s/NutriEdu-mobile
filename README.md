@@ -29,6 +29,8 @@ Implementado:
 - recursos ingleses de navegacion, recetas y notificaciones conservados solo como trabajo de desarrollo, sin selector publico hasta completar UI, catalogos y mensajes del backend;
 - plan semanal editable con busqueda de recetas compatibles;
 - guardado atomico del plan y validacion de sus 21 espacios desde la API;
+- reevaluacion de recetas guardadas al cargar el plan, bloqueo de incompatibilidades y acceso a sus alternativas;
+- confirmacion antes de descartar cambios locales mediante actualizacion manual;
 - lista de compras detallada, agrupada por familia alimentaria y sincronizada con el plan;
 - cantidades agregadas en gramos o unidades, recetas de origen y aviso de datos incompletos;
 - progreso de compras persistente por usuario y firma del plan, con vistas de todos o pendientes;
@@ -69,7 +71,7 @@ Siguiente bloque:
 - completar nutrientes y porciones auditables del catalogo de recetas para elevar la confianza del ranking;
 - validar en dispositivo fisico compras detalladas y alternativas de recetas con un perfil restringido;
 - definir contenido localizado para catalogos, recetas y alertas del backend antes de habilitar ingles;
-- completar la migracion i18n de autenticacion, perfil, analisis, plan y documentos;
+- completar la migracion i18n de autenticacion, perfil, analisis y documentos;
 - completar la aceptacion de recordatorios locales en Android e iOS, todavia sin push remoto.
 
 ## Requisitos

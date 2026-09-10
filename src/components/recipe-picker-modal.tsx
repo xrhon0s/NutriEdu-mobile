@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import {
   emptyRecipeFilters,
   filterRecipes,
@@ -37,6 +38,7 @@ export function RecipePickerModal({
   onClose,
   onSelect,
 }: RecipePickerModalProps) {
+  const { t } = useTranslation();
   const [filters, setFilters] = useState<RecipeFilters>(emptyRecipeFilters);
 
   const filteredRecipes = useMemo(() => filterRecipes(recipes, filters), [filters, recipes]);
@@ -57,10 +59,10 @@ export function RecipePickerModal({
         <KeyboardAvoidingView style={styles.keyboardArea} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.header}>
             <View style={styles.headerText}>
-              <Text style={styles.eyebrow}>SELECCIONAR RECETA</Text>
+              <Text style={styles.eyebrow}>{t('planner.picker.eyebrow')}</Text>
               <Text style={styles.title}>{slotLabel}</Text>
             </View>
-            <Pressable accessibilityRole="button" accessibilityLabel="Cerrar selector" hitSlop={10} onPress={close} style={styles.closeButton}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('planner.picker.close')} hitSlop={10} onPress={close} style={styles.closeButton}>
               <Ionicons name="close" size={24} color={theme.colors.text} />
             </Pressable>
           </View>
@@ -82,13 +84,13 @@ export function RecipePickerModal({
                   style={({ pressed }) => [styles.recipeRow, selected && styles.selectedRow, pressed && styles.pressed]}>
                   <View style={styles.recipeInfo}>
                     <Text style={styles.recipeName}>{item.nombre}</Text>
-                    <Text style={styles.recipeMeta}>{item.calorias ?? '--'} kcal · {healthLabel(item.nivel_salud)}</Text>
+                    <Text style={styles.recipeMeta}>{item.calorias ?? '--'} kcal · {healthLabel(item.nivel_salud, t)}</Text>
                   </View>
                   <Ionicons name={selected ? 'checkmark-circle' : 'add-circle-outline'} size={24} color={theme.colors.primary} />
                 </Pressable>
               );
             }}
-            ListEmptyComponent={<Text style={styles.empty}>No encontramos recetas compatibles con esa busqueda.</Text>}
+            ListEmptyComponent={<Text style={styles.empty}>{t('planner.picker.empty')}</Text>}
           />
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -96,7 +98,11 @@ export function RecipePickerModal({
   );
 }
 
-const healthLabel = (level: number) => level >= 5 ? 'Muy saludable' : level >= 3 ? 'Saludable' : 'Moderada';
+const healthLabel = (level: number, t: ReturnType<typeof useTranslation>['t']) => {
+  if (level >= 5) return t('recipes.filters.veryHealthy');
+  if (level >= 3) return t('recipes.filters.healthy');
+  return t('recipes.filters.moderate');
+};
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: theme.colors.background },
