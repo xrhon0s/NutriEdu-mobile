@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Redirect, Tabs } from 'expo-router';
-import { ColorValue, Pressable, Text } from 'react-native';
+import { Alert, ColorValue, Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { LoadingState } from '@/components/screen-state';
 import { useAuth } from '@/context/auth-context';
@@ -16,6 +16,13 @@ export default function AuthenticatedLayout() {
   const { t } = useTranslation();
   if (isLoading) return <LoadingState />;
   if (!token) return <Redirect href="/login" />;
+
+  const confirmLogout = () => {
+    Alert.alert(t('tabs.logoutTitle'), t('tabs.logoutMessage'), [
+      { text: t('tabs.cancel'), style: 'cancel' },
+      { text: t('tabs.logout'), style: 'destructive', onPress: () => void logout() },
+    ]);
+  };
 
   return (
     <Tabs
@@ -35,8 +42,11 @@ export default function AuthenticatedLayout() {
           title: t('tabs.profile'),
           tabBarIcon: tabIcon('person-outline'),
           headerRight: () => (
-            <Pressable accessibilityRole="button" onPress={logout} hitSlop={12} style={{ paddingRight: 16 }}>
-              <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>{t('tabs.logout')}</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('tabs.logout')} onPress={confirmLogout} hitSlop={12} style={{ paddingRight: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <Ionicons name="log-out-outline" size={18} color={theme.colors.primary} />
+                <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>{t('tabs.logout')}</Text>
+              </View>
             </Pressable>
           ),
         }}

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import {
   Alert,
@@ -281,7 +281,12 @@ export default function ShoppingScreen() {
               <Pressable accessibilityRole="button" onPress={() => setMode('all')} style={styles.emptyAction}>
                 <Text style={styles.emptyActionText}>{t('shopping.showCompleted')}</Text>
               </Pressable>
-            ) : null}
+            ) : (
+              <Pressable accessibilityRole="button" onPress={() => router.push('/plan')} style={styles.primaryEmptyAction}>
+                <Ionicons name="calendar-outline" size={18} color="#FFFFFF" />
+                <Text style={styles.primaryEmptyActionText}>{t('shopping.goToPlan')}</Text>
+              </Pressable>
+            )}
           </View>
         )}
       </ScrollView>
@@ -421,4 +426,6 @@ const styles = StyleSheet.create({
   emptyText: { color: theme.colors.textMuted, textAlign: 'center', lineHeight: 20 },
   emptyAction: { minHeight: 42, justifyContent: 'center', paddingHorizontal: theme.spacing.md, marginTop: 4 },
   emptyActionText: { color: theme.colors.primary, fontWeight: '700' },
+  primaryEmptyAction: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: theme.radius.small, backgroundColor: theme.colors.primary, paddingHorizontal: theme.spacing.md, marginTop: 6 },
+  primaryEmptyActionText: { color: '#FFFFFF', fontWeight: '800' },
 });

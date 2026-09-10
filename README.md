@@ -35,6 +35,8 @@ Implementado:
 - lista de compras detallada, agrupada por familia alimentaria y sincronizada con el plan;
 - cantidades agregadas en gramos o unidades, recetas de origen y aviso de datos incompletos;
 - progreso de compras persistente por usuario y firma del plan, con vistas de todos o pendientes;
+- estado vacio de compras con acceso directo al plan semanal;
+- cierre de sesion ubicado en Perfil, identificado con texto e icono y protegido por confirmacion;
 - formularios ajustables al teclado para mantener visibles las busquedas inferiores;
 - captura desde camara o galeria con permisos, vista previa y validacion de imagen;
 - intake multipart autenticado sin retencion de la imagen;

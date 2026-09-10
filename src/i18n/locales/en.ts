@@ -11,6 +11,9 @@ export const en = {
     plan: 'Plan',
     shopping: 'Shopping',
     logout: 'Log out',
+    logoutTitle: 'Log out',
+    logoutMessage: 'Do you want to log out on this device?',
+    cancel: 'Cancel',
   },
   language: {
     title: 'App language',
@@ -127,6 +130,7 @@ export const en = {
     pendingEmptyTitle: 'Everything is ready',
     pendingEmptyText: 'You completed every ingredient on this list.',
     showCompleted: 'Show completed',
+    goToPlan: 'Go to weekly plan',
     groups: {
       protein: 'Protein',
       vegetable: 'Vegetables',

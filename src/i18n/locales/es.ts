@@ -10,7 +10,10 @@ export const es = {
     analyze: 'Analizar',
     plan: 'Plan',
     shopping: 'Compras',
-    logout: 'Salir',
+    logout: 'Cerrar sesion',
+    logoutTitle: 'Cerrar sesion',
+    logoutMessage: '¿Quieres cerrar tu sesion en este dispositivo?',
+    cancel: 'Cancelar',
   },
   language: {
     title: 'Idioma de la aplicacion',
@@ -127,6 +130,7 @@ export const es = {
     pendingEmptyTitle: 'Todo está listo',
     pendingEmptyText: 'Completaste todos los ingredientes de esta lista.',
     showCompleted: 'Mostrar completados',
+    goToPlan: 'Ir al plan semanal',
     groups: {
       protein: 'Proteínas',
       vegetable: 'Verduras',
