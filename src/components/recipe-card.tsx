@@ -22,6 +22,7 @@ export function RecipeCard({ recipe, onPress }: { recipe: Recipe; onPress: () =>
         <Text style={styles.metric}>{recipe.calorias ?? '--'} kcal</Text>
         <Text style={styles.metric}>{recipe.tiempo_preparacion ? `${recipe.tiempo_preparacion} min` : t('recipes.card.timePending')}</Text>
       </View>
+      {recipe.recommendation?.reasons?.[0] ? <Text style={styles.reason} numberOfLines={2}>{recipe.recommendation.reasons[0]}</Text> : null}
       {recipe.recommendation?.confidence != null && recipe.recommendation.confidence < 0.5 ? <Text style={styles.dataNotice}>{t('recipes.card.limitedData')}</Text> : null}
       <View style={styles.action}><Text style={styles.actionText}>{t('recipes.card.evaluation')}</Text><Ionicons name="chevron-forward" size={16} color={theme.colors.primary} /></View>
     </Pressable>
@@ -44,6 +45,7 @@ const styles = StyleSheet.create({
   description: { minHeight: 40, color: theme.colors.textMuted, lineHeight: 20 },
   metrics: { flexDirection: 'row', gap: 12 },
   metric: { color: theme.colors.textMuted, fontSize: 13, fontWeight: '600' },
+  reason: { color: theme.colors.textMuted, fontSize: 13, lineHeight: 19 },
   dataNotice: { color: theme.colors.warning, fontSize: 12, fontWeight: '700' },
   action: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 2, paddingTop: 4 },
   actionText: { color: theme.colors.primary, fontSize: 13, fontWeight: '700' },

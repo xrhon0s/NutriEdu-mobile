@@ -15,7 +15,7 @@ import { LoadingState } from '@/components/screen-state';
 import { theme } from '@/constants/nutriedu-theme';
 import { useAuth } from '@/context/auth-context';
 import { apiRequest } from '@/services/api';
-import { Recipe, RecipeSearchResponse } from '@/types/api';
+import { Recipe, RecipeSearchResponse, RecommendationProfileContext } from '@/types/api';
 
 const PAGE_SIZE = 12;
 
@@ -29,6 +29,7 @@ export default function RecipesScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextOffset, setNextOffset] = useState<number | null>(null);
+  const [recommendationContext, setRecommendationContext] = useState<RecommendationProfileContext | null>(null);
   const [error, setError] = useState('');
   const requestSequence = useRef(0);
 
@@ -56,6 +57,7 @@ export default function RecipesScreen() {
       if (requestId !== requestSequence.current) return;
       setRecipes((current) => append ? mergeRecipes(current, result.recipes) : result.recipes);
       setNextOffset(result.pagination.nextOffset);
+      if (!append) setRecommendationContext(result.profileContext || null);
     } catch (requestError) {
       if (requestError instanceof Error && requestError.name === 'AbortError') return;
       if (requestId === requestSequence.current) {
@@ -105,9 +107,15 @@ export default function RecipesScreen() {
         ListHeaderComponent={(
           <View style={styles.header}>
             <View>
-              <Text style={styles.title}>{t('recipes.exploreTitle')}</Text>
-              <Text style={styles.subtitle}>{t('recipes.exploreSubtitle')}</Text>
+              <Text style={styles.title}>{countActiveRecipeFilters(filters) === 0 ? t('recipes.recommendedTitle') : t('recipes.exploreTitle')}</Text>
+              <Text style={styles.subtitle}>{countActiveRecipeFilters(filters) === 0 ? t('recipes.recommendedSubtitle') : t('recipes.exploreSubtitle')}</Text>
             </View>
+            {countActiveRecipeFilters(filters) === 0 && recommendationContext?.clinicalReviewRequired ? (
+              <Text style={styles.warning}>{t('recipes.clinicalReview')}</Text>
+            ) : null}
+            {countActiveRecipeFilters(filters) === 0 && recommendationContext?.missingFactors?.includes('profile') ? (
+              <Text style={styles.notice}>{t('recipes.incompleteProfile')}</Text>
+            ) : null}
             <RecipeFilterControls value={filters} onChange={setFilters} />
             <View style={styles.resultRow}>
               <Text style={styles.resultCount}>{t('recipes.loaded', { count: recipes.length })}</Text>
@@ -161,6 +169,8 @@ const styles = StyleSheet.create({
   resultRow: { minHeight: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   resultCount: { color: theme.colors.textMuted, fontSize: 13, fontWeight: '700' },
   error: { color: theme.colors.danger, backgroundColor: theme.colors.dangerSurface, borderRadius: theme.radius.small, padding: 12 },
+  warning: { color: theme.colors.warning, backgroundColor: theme.colors.warningSurface, borderRadius: theme.radius.small, padding: 12, lineHeight: 19, fontWeight: '700' },
+  notice: { color: theme.colors.text, backgroundColor: theme.colors.surfaceMuted, borderRadius: theme.radius.small, padding: 12, lineHeight: 19 },
   empty: { color: theme.colors.textMuted, textAlign: 'center', lineHeight: 20, paddingVertical: 48 },
   loadMoreButton: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: theme.colors.primary, borderRadius: theme.radius.medium, backgroundColor: theme.colors.surface, marginTop: theme.spacing.sm, paddingHorizontal: 14 },
   loadMoreText: { color: theme.colors.primary, fontSize: 14, fontWeight: '800' },

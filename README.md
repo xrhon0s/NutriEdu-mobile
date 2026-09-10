@@ -21,6 +21,7 @@ Implementado:
 - edicion manual de metas y limites nutricionales;
 - navegacion inferior para perfil, recetas, analisis, plan y compras;
 - recetas recomendadas mediante ranking explicable por restricciones, objetivos, condiciones, metas y preferencias;
+- contexto visible del ranking, avisos de perfil incompleto o revision clinica y razon principal de afinidad en cada receta;
 - detalle de receta con alertas y alternativas seguras limitadas a la misma funcion culinaria;
 - exploracion de recetas por nombre o descripcion, nivel de salud y rango de calorias;
 - paginacion de recetas en bloques de 12 con carga incremental, refresco y proteccion contra respuestas obsoletas;

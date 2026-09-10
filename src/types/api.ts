@@ -32,6 +32,17 @@ export type RecipeSearchResponse = {
     hasMore: boolean;
     total?: number;
   };
+  profileContext?: RecommendationProfileContext;
+};
+
+export type RecommendationProfileContext = {
+  usedFactors: string[];
+  missingFactors: string[];
+  notScoredFactors: string[];
+  effectiveRestrictions: string[];
+  goals: string[];
+  conditions: string[];
+  clinicalReviewRequired: boolean;
 };
 
 export type NotificationCategory = 'meals' | 'weekly_plan' | 'shopping' | 'progress' | 'security';
