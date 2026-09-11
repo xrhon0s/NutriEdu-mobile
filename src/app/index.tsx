@@ -5,5 +5,5 @@ import { useAuth } from '@/context/auth-context';
 export default function IndexScreen() {
   const { token, isLoading } = useAuth();
   if (isLoading) return <LoadingState label="Preparando NutriEdu..." />;
-  return <Redirect href={token ? '/(app)/profile' : '/login'} />;
+  return <Redirect href={token ? '/(app)/home' : '/login'} />;
 }

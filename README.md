@@ -22,7 +22,8 @@ Implementado:
 - resumen del perfil de recomendacion con datos base, objetivos, alertas y metas realmente configuradas;
 - navegacion visual de las cuatro areas del perfil con iconos, conteos y contexto de cada seccion;
 - accesos de notificaciones, privacidad y expediente separados de las acciones que guardan datos clinicos;
-- navegacion inferior para perfil, recetas, analisis, plan y compras;
+- inicio operativo con progreso semanal, comidas del dia, recomendacion principal, avisos y accesos rapidos;
+- navegacion inferior para inicio, recetas, analisis, plan y compras; Perfil queda accesible desde Inicio;
 - recetas recomendadas mediante ranking explicable por restricciones, objetivos, condiciones, metas y preferencias;
 - contexto visible del ranking, avisos de perfil incompleto o revision clinica y razon principal de afinidad en cada receta;
 - detalle de receta con alertas y alternativas seguras limitadas a la misma funcion culinaria;
@@ -245,6 +246,7 @@ src/
 │   │   ├── analyze.tsx
 │   │   ├── medical-documents.tsx
 │   │   ├── notifications.tsx
+│   │   ├── home.tsx
 │   │   ├── plan.tsx
 │   │   ├── profile.tsx
 │   │   └── shopping.tsx

@@ -36,11 +36,12 @@ export default function AuthenticatedLayout() {
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
         tabBarHideOnKeyboard: true,
       }}>
+      <Tabs.Screen name="home" options={{ title: t('tabs.home'), headerShown: false, tabBarIcon: tabIcon('home-outline') }} />
       <Tabs.Screen
         name="profile"
         options={{
           title: t('tabs.profile'),
-          tabBarIcon: tabIcon('person-outline'),
+          href: null,
           headerRight: () => (
             <Pressable accessibilityRole="button" accessibilityLabel={t('tabs.logout')} onPress={confirmLogout} hitSlop={12} style={{ paddingRight: 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
