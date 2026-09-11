@@ -81,14 +81,14 @@ export default function ShoppingScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
-  const progressKey = `${CHECKED_KEY}:${user?.id ?? 'guest'}`;
+  const progressKey = `${CHECKED_KEY}_${user?.id ?? 'guest'}`;
 
   const fetchList = useCallback(async () => {
     if (!user?.id) throw new Error(t('shopping.loadError'));
 
     const [result, saved] = await Promise.all([
       apiRequest<DetailedShoppingListResponse>(`/planner/${user.id}/shopping-list?detailed=true`, { token }),
-      storage.get(`${CHECKED_KEY}:${user.id}`),
+      storage.get(`${CHECKED_KEY}_${user.id}`),
     ]);
 
     return { result, saved: parseStoredProgress(saved, result) };

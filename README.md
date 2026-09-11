@@ -35,6 +35,7 @@ Implementado:
 - lista de compras detallada, agrupada por familia alimentaria y sincronizada con el plan;
 - cantidades agregadas en gramos o unidades, recetas de origen y aviso de datos incompletos;
 - progreso de compras persistente por usuario y firma del plan, con vistas de todos o pendientes;
+- claves de progreso compatibles con las restricciones de Expo SecureStore en Android e iOS;
 - estado vacio de compras con acceso directo al plan semanal;
 - cierre de sesion ubicado en Perfil, identificado con texto e icono y protegido por confirmacion;
 - formularios ajustables al teclado para mantener visibles las busquedas inferiores;
