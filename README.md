@@ -19,6 +19,9 @@ Implementado:
 - seleccion priorizada de objetivos nutricionales;
 - gestion y busqueda de condiciones clinicas y restricciones alimentarias;
 - edicion manual de metas y limites nutricionales;
+- resumen del perfil de recomendacion con datos base, objetivos, alertas y metas realmente configuradas;
+- navegacion visual de las cuatro areas del perfil con iconos, conteos y contexto de cada seccion;
+- accesos de notificaciones, privacidad y expediente separados de las acciones que guardan datos clinicos;
 - navegacion inferior para perfil, recetas, analisis, plan y compras;
 - recetas recomendadas mediante ranking explicable por restricciones, objetivos, condiciones, metas y preferencias;
 - contexto visible del ranking, avisos de perfil incompleto o revision clinica y razon principal de afinidad en cada receta;
@@ -77,7 +80,7 @@ Siguiente bloque:
 
 - cerrar un recorrido de aceptacion fisica completo en iPhone y Android: registro, perfil, recetas, plan, compras, analisis, privacidad y recuperacion;
 - ampliar las pruebas automatizadas iniciales hacia componentes y recorridos end-to-end;
-- unificar componentes, estados de error/reintento, formularios y jerarquia visual antes de pulir cada pantalla;
+- continuar la jerarquia visual compartida en Analizar, Plan y Notificaciones, tomando Perfil como referencia;
 - completar i18n: aun existe copy directo en autenticacion, perfil, analisis, documentos y componentes de revision;
 - completar nutrientes y porciones auditables del catalogo de recetas para elevar la confianza del ranking y las cantidades de compras;
 - sustituir la extraccion de desarrollo de documentos medicos por OCR/IA real con revision humana;

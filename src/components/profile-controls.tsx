@@ -13,10 +13,21 @@ import { theme } from '@/constants/nutriedu-theme';
 
 export type Choice = { value: string; label: string };
 
-export function FormSection({ title, children }: { title: string; children: ReactNode }) {
+export function FormSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <View style={styles.sectionHeading}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        {description ? <Text style={styles.sectionDescription}>{description}</Text> : null}
+      </View>
       <View style={styles.sectionContent}>{children}</View>
     </View>
   );
@@ -44,6 +55,7 @@ export function FormField({
       <Text style={styles.label}>{label}</Text>
       <View style={[styles.inputShell, multiline && styles.multilineShell]}>
         <TextInput
+          accessibilityLabel={label}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -198,7 +210,9 @@ export function SaveButton({ label, saving, onPress }: { label: string; saving: 
 
 const styles = StyleSheet.create({
   section: { gap: theme.spacing.md },
+  sectionHeading: { gap: theme.spacing.xs },
   sectionTitle: { color: theme.colors.text, fontSize: 18, fontWeight: '800' },
+  sectionDescription: { color: theme.colors.textMuted, fontSize: 13, lineHeight: 19 },
   sectionContent: { gap: theme.spacing.md },
   field: { gap: 7 },
   label: { color: theme.colors.text, fontSize: 14, fontWeight: '700' },

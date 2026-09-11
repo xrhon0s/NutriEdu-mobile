@@ -62,11 +62,16 @@ type ProfileData = {
   selectedRestrictions: number[];
 };
 
-const tabs: { id: ProfileTab; label: string }[] = [
-  { id: 'personal', label: 'Personal' },
-  { id: 'goals', label: 'Objetivos' },
-  { id: 'clinical', label: 'Salud' },
-  { id: 'targets', label: 'Metas' },
+const tabs: {
+  id: ProfileTab;
+  label: string;
+  description: string;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+}[] = [
+  { id: 'personal', label: 'Personal', description: 'Datos, actividad y habitos', icon: 'person-outline' },
+  { id: 'goals', label: 'Objetivos', description: 'Prioridades del proceso', icon: 'flag-outline' },
+  { id: 'clinical', label: 'Salud', description: 'Condiciones y restricciones', icon: 'medkit-outline' },
+  { id: 'targets', label: 'Metas', description: 'Limites nutricionales', icon: 'options-outline' },
 ];
 
 const featuredConditionCodes = [
@@ -169,6 +174,24 @@ export default function ProfileScreen() {
   const [saving, setSaving] = useState<ProfileTab | null>(null);
   const [fatalError, setFatalError] = useState('');
   const [status, setStatus] = useState<Status>(null);
+  const personalSignals = [
+    profile.fecha_nacimiento,
+    profile.sexo,
+    profile.estatura_cm,
+    profile.peso_kg,
+    profile.nivel_actividad,
+    profile.condicion_fisica,
+    profile.meals_per_day,
+    profile.diet_style,
+  ].filter(Boolean).length;
+  const targetSignals = targetFields.filter((field) => Boolean(targets[field.key])).length;
+  const tabCounts: Record<ProfileTab, string> = {
+    personal: `${personalSignals}/8`,
+    goals: String(selectedGoals.length),
+    clinical: String(selectedConditions.length + selectedRestrictions.length),
+    targets: String(targetSignals),
+  };
+  const activeTabConfig = tabs.find((tab) => tab.id === activeTab) ?? tabs[0];
 
   const fetchProfileData = useCallback(async (): Promise<ProfileData> => {
     const [saved, catalogs, allRestrictions, userRestrictions] = await Promise.all([
@@ -313,10 +336,30 @@ export default function ProfileScreen() {
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.content}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadProfile(); }} tintColor={theme.colors.primary} />}>
-        <View>
+        <View style={styles.hero}>
           <Text style={styles.eyebrow}>PERFIL DE SALUD</Text>
           <Text style={styles.title}>Hola, {user?.nombre?.split(' ')[0] || 'Usuario'}</Text>
-          <Text style={styles.subtitle}>Actualiza los datos que NutriEdu usa para adaptar recetas y alertas.</Text>
+          <Text style={styles.subtitle}>Estas señales se usan para adaptar recetas, alertas y recomendaciones.</Text>
+          <View style={styles.signalSummary}>
+            <View style={styles.signalSummaryHeader}>
+              <View style={styles.signalSummaryIcon}>
+                <Ionicons name="sparkles-outline" size={19} color={theme.colors.primaryPressed} />
+              </View>
+              <View style={styles.signalSummaryCopy}>
+                <Text style={styles.signalSummaryTitle}>Perfil de recomendacion</Text>
+                <Text style={styles.signalSummaryText}>
+                  {selectedGoals.length
+                    ? `${selectedGoals.length} objetivo${selectedGoals.length === 1 ? '' : 's'} activo${selectedGoals.length === 1 ? '' : 's'}`
+                    : 'Selecciona al menos un objetivo para personalizar mejor tus resultados'}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.signalStats}>
+              <SignalStat value={`${personalSignals}/8`} label="Datos base" />
+              <SignalStat value={String(selectedConditions.length + selectedRestrictions.length)} label="Alertas" />
+              <SignalStat value={String(targetSignals)} label="Metas" />
+            </View>
+          </View>
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
@@ -329,11 +372,20 @@ export default function ProfileScreen() {
                 accessibilityState={{ selected: active }}
                 onPress={() => { setActiveTab(tab.id); setStatus(null); }}
                 style={[styles.tab, active && styles.activeTab]}>
+                <View style={styles.tabTopRow}>
+                  <Ionicons name={tab.icon} size={18} color={active ? theme.colors.primaryPressed : theme.colors.textMuted} />
+                  <Text style={[styles.tabCount, active && styles.activeTabText]}>{tabCounts[tab.id]}</Text>
+                </View>
                 <Text style={[styles.tabText, active && styles.activeTabText]}>{tab.label}</Text>
               </Pressable>
             );
           })}
         </ScrollView>
+
+        <View style={styles.activeSectionHeading}>
+          <Text style={styles.activeSectionTitle}>{activeTabConfig.label}</Text>
+          <Text style={styles.activeSectionDescription}>{activeTabConfig.description}</Text>
+        </View>
 
         {status ? (
           <View style={[styles.status, status.type === 'error' ? styles.errorStatus : styles.successStatus]}>
@@ -361,6 +413,46 @@ export default function ProfileScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+  );
+}
+
+function SignalStat({ value, label }: { value: string; label: string }) {
+  return (
+    <View style={styles.signalStat}>
+      <Text style={styles.signalStatValue}>{value}</Text>
+      <Text style={styles.signalStatLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function ProfileLink({
+  icon,
+  title,
+  description,
+  onPress,
+  divider = true,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  title: string;
+  description: string;
+  onPress: () => void;
+  divider?: boolean;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      onPress={onPress}
+      style={({ pressed }) => [styles.documentLink, !divider && styles.documentLinkLast, pressed && styles.pressed]}>
+      <View style={styles.linkIcon}>
+        <Ionicons name={icon} size={21} color={theme.colors.primary} />
+      </View>
+      <View style={styles.documentLinkText}>
+        <Text style={styles.documentLinkTitle}>{title}</Text>
+        <Text style={styles.documentLinkDescription}>{description}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={20} color={theme.colors.textMuted} />
+    </Pressable>
   );
 }
 
@@ -428,28 +520,12 @@ function PersonalView({ form, setForm, saving, onSave }: {
         <FormField label="Notas adicionales" value={form.notas} multiline onChangeText={(value) => update('notas', value)} />
       </FormSection>
       <SaveButton label="Guardar datos personales" saving={saving} onPress={onSave} />
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.push('/notifications')}
-        style={({ pressed }) => [styles.documentLink, pressed && styles.pressed]}>
-        <Ionicons name="notifications-outline" size={23} color={theme.colors.primary} />
-        <View style={styles.documentLinkText}>
-          <Text style={styles.documentLinkTitle}>Notificaciones</Text>
-          <Text style={styles.documentLinkDescription}>Bandeja, categorias y horas silenciosas</Text>
+      <FormSection title="Cuenta y preferencias" description="Configuraciones que no cambian tus datos clinicos.">
+        <View style={styles.linkGroup}>
+          <ProfileLink icon="notifications-outline" title="Notificaciones" description="Bandeja, categorias y horas silenciosas" onPress={() => router.push('/notifications')} />
+          <ProfileLink icon="shield-checkmark-outline" title="Privacidad y cuenta" description="Retencion de datos y eliminacion de cuenta" onPress={() => router.push('/privacy-center')} divider={false} />
         </View>
-        <Ionicons name="chevron-forward" size={20} color={theme.colors.textMuted} />
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.push('/privacy-center')}
-        style={({ pressed }) => [styles.documentLink, pressed && styles.pressed]}>
-        <Ionicons name="shield-checkmark-outline" size={23} color={theme.colors.primary} />
-        <View style={styles.documentLinkText}>
-          <Text style={styles.documentLinkTitle}>Privacidad y cuenta</Text>
-          <Text style={styles.documentLinkDescription}>Retencion de datos y eliminacion de cuenta</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color={theme.colors.textMuted} />
-      </Pressable>
+      </FormSection>
     </View>
   );
 }
@@ -506,28 +582,12 @@ function ClinicalView({ conditions, selectedConditions, onToggleCondition, restr
   return (
     <View style={styles.panel}>
       <View style={styles.guidance}><Text style={styles.guidanceText}>Registra condiciones confirmadas. Las marcadas requieren seguimiento profesional.</Text></View>
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.push('/medical-documents')}
-        style={({ pressed }) => [styles.documentLink, pressed && styles.pressed]}>
-        <Ionicons name="document-lock-outline" size={23} color={theme.colors.primary} />
-        <View style={styles.documentLinkText}>
-          <Text style={styles.documentLinkTitle}>Documentos medicos</Text>
-          <Text style={styles.documentLinkDescription}>Subir formula, laboratorio o indicacion nutricional</Text>
+      <FormSection title="Expediente" description="Documentos y cambios que requieren revision del usuario.">
+        <View style={styles.linkGroup}>
+          <ProfileLink icon="document-lock-outline" title="Documentos medicos" description="Subir formula, laboratorio o indicacion nutricional" onPress={() => router.push('/medical-documents')} />
+          <ProfileLink icon="time-outline" title="Historial medico" description="Revisiones, cambios aplicados y retencion" onPress={() => router.push('/medical-history')} divider={false} />
         </View>
-        <Ionicons name="chevron-forward" size={20} color={theme.colors.textMuted} />
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.push('/medical-history')}
-        style={({ pressed }) => [styles.documentLink, pressed && styles.pressed]}>
-        <Ionicons name="time-outline" size={23} color={theme.colors.primary} />
-        <View style={styles.documentLinkText}>
-          <Text style={styles.documentLinkTitle}>Historial medico</Text>
-          <Text style={styles.documentLinkDescription}>Revisiones, cambios aplicados y retencion</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color={theme.colors.textMuted} />
-      </Pressable>
+      </FormSection>
       <FormSection title="Condiciones clinicas">
         <SearchField value={conditionQuery} onChangeText={setConditionQuery} placeholder="Buscar condicion" />
         <Text style={styles.listMeta}>{conditionQuery ? `${visibleConditions.length} resultados` : 'Condiciones frecuentes'}</Text>
@@ -624,14 +684,30 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: theme.colors.background },
   keyboardArea: { flex: 1 },
   content: { padding: theme.spacing.lg, gap: theme.spacing.lg, paddingBottom: 56 },
+  hero: { gap: theme.spacing.sm },
   eyebrow: { color: theme.colors.primary, fontSize: 12, fontWeight: '800' },
   title: { color: theme.colors.text, fontSize: 28, fontWeight: '800', marginTop: theme.spacing.xs },
-  subtitle: { color: theme.colors.textMuted, fontSize: 15, lineHeight: 21, marginTop: theme.spacing.sm },
+  subtitle: { color: theme.colors.textMuted, fontSize: 15, lineHeight: 21 },
+  signalSummary: { borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.medium, backgroundColor: theme.colors.surface, padding: theme.spacing.md, gap: theme.spacing.md, marginTop: theme.spacing.sm },
+  signalSummaryHeader: { flexDirection: 'row', alignItems: 'center', gap: 11 },
+  signalSummaryIcon: { width: 38, height: 38, borderRadius: theme.radius.small, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surfaceMuted },
+  signalSummaryCopy: { flex: 1, minWidth: 0, gap: 2 },
+  signalSummaryTitle: { color: theme.colors.text, fontSize: 15, fontWeight: '800' },
+  signalSummaryText: { color: theme.colors.textMuted, fontSize: 12, lineHeight: 17 },
+  signalStats: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: theme.colors.border, paddingTop: 12 },
+  signalStat: { flex: 1, minWidth: 0, alignItems: 'center', gap: 2 },
+  signalStatValue: { color: theme.colors.primaryPressed, fontSize: 17, fontWeight: '800' },
+  signalStatLabel: { color: theme.colors.textMuted, fontSize: 11, fontWeight: '600', textAlign: 'center' },
   tabs: { gap: theme.spacing.sm },
-  tab: { minHeight: 42, justifyContent: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent', paddingHorizontal: 12 },
-  activeTab: { borderBottomColor: theme.colors.primary },
+  tab: { width: 104, minHeight: 70, justifyContent: 'space-between', borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.medium, backgroundColor: theme.colors.surface, padding: 11 },
+  activeTab: { borderColor: theme.colors.primary, backgroundColor: theme.colors.surfaceMuted },
+  tabTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  tabCount: { color: theme.colors.textMuted, fontSize: 12, fontWeight: '800' },
   tabText: { color: theme.colors.textMuted, fontSize: 14, fontWeight: '700' },
   activeTabText: { color: theme.colors.primaryPressed },
+  activeSectionHeading: { gap: 3 },
+  activeSectionTitle: { color: theme.colors.text, fontSize: 21, fontWeight: '800' },
+  activeSectionDescription: { color: theme.colors.textMuted, fontSize: 13, lineHeight: 18 },
   status: { borderRadius: theme.radius.medium, borderWidth: 1, padding: 13 },
   successStatus: { borderColor: theme.colors.border, backgroundColor: theme.colors.surfaceMuted },
   errorStatus: { borderColor: '#F5B7B1', backgroundColor: theme.colors.dangerSurface },
@@ -645,7 +721,10 @@ const styles = StyleSheet.create({
   emptyResults: { color: theme.colors.textMuted, fontSize: 14, lineHeight: 20, paddingVertical: theme.spacing.sm },
   guidance: { borderLeftWidth: 3, borderLeftColor: theme.colors.warning, backgroundColor: theme.colors.warningSurface, padding: 12 },
   guidanceText: { color: theme.colors.warning, fontSize: 13, lineHeight: 18, fontWeight: '600' },
-  documentLink: { minHeight: 68, flexDirection: 'row', alignItems: 'center', gap: 11, borderBottomWidth: 1, borderBottomColor: theme.colors.border, paddingVertical: 10 },
+  linkGroup: { borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.medium, backgroundColor: theme.colors.surface, paddingHorizontal: 13 },
+  documentLink: { minHeight: 70, flexDirection: 'row', alignItems: 'center', gap: 11, borderBottomWidth: 1, borderBottomColor: theme.colors.border, paddingVertical: 10 },
+  documentLinkLast: { borderBottomWidth: 0 },
+  linkIcon: { width: 36, height: 36, borderRadius: theme.radius.small, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surfaceMuted },
   documentLinkText: { flex: 1, minWidth: 0 },
   documentLinkTitle: { color: theme.colors.text, fontSize: 15, fontWeight: '800' },
   documentLinkDescription: { color: theme.colors.textMuted, fontSize: 12, lineHeight: 17, marginTop: 3 },
