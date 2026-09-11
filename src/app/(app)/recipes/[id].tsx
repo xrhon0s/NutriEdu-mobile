@@ -28,6 +28,7 @@ export default function RecipeDetailScreen() {
   const [showAlternatives, setShowAlternatives] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -50,10 +51,21 @@ export default function RecipeDetailScreen() {
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [id, t, token, user?.id]);
+  }, [id, retryKey, t, token, user?.id]);
 
   if (loading) return <LoadingState label={t('recipes.detail.loading')} />;
-  if (error || !recipe || !evaluation) return <ErrorState message={error || t('recipes.detail.notFound')} />;
+  if (error || !recipe || !evaluation) {
+    return (
+      <ErrorState
+        message={error || t('recipes.detail.notFound')}
+        onRetry={() => {
+          setError('');
+          setLoading(true);
+          setRetryKey((current) => current + 1);
+        }}
+      />
+    );
+  }
 
   const status = getStatusContent(evaluation.status, t);
   return (

@@ -194,7 +194,7 @@ export default function NotificationsScreen() {
   };
 
   if (loading) return <LoadingState label={t('notifications.loading')} />;
-  if (error && !preferences) return <ErrorState message={error} />;
+  if (error && !preferences) return <ErrorState message={error} onRetry={() => { setLoading(true); void refresh(); }} />;
 
   return (
     <SafeAreaView style={styles.safeArea}>

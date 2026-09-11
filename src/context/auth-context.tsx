@@ -1,5 +1,5 @@
-import { createContext, PropsWithChildren, useContext, useEffect, useState } from 'react';
-import { apiRequest } from '@/services/api';
+import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useState } from 'react';
+import { apiRequest, setUnauthorizedHandler } from '@/services/api';
 import { storage } from '@/services/storage';
 
 const TOKEN_KEY = 'nutriedu_token';
@@ -21,8 +21,10 @@ type AuthContextValue = {
   token: string | null;
   user: AuthUser | null;
   isLoading: boolean;
+  notice: string;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  clearNotice: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -31,6 +33,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [notice, setNotice] = useState('');
+
+  const clearSession = useCallback(async () => {
+    await Promise.allSettled([storage.remove(TOKEN_KEY), storage.remove(USER_KEY)]);
+    setToken(null);
+    setUser(null);
+  }, []);
 
   useEffect(() => {
     Promise.all([storage.get(TOKEN_KEY), storage.get(USER_KEY)])
@@ -44,6 +53,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
       .finally(() => setIsLoading(false));
   }, []);
 
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      setNotice('Tu sesion expiro. Inicia sesion nuevamente.');
+      void clearSession();
+    });
+    return () => setUnauthorizedHandler(null);
+  }, [clearSession]);
+
   const login = async (email: string, password: string) => {
     const response = await apiRequest<LoginResponse>('/users/login', {
       method: 'POST',
@@ -56,16 +73,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
     ]);
     setToken(response.token);
     setUser(response.user);
+    setNotice('');
   };
 
   const logout = async () => {
-    await Promise.all([storage.remove(TOKEN_KEY), storage.remove(USER_KEY)]);
-    setToken(null);
-    setUser(null);
+    setNotice('');
+    await clearSession();
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ token, user, isLoading, notice, login, logout, clearNotice: () => setNotice('') }}>
       {children}
     </AuthContext.Provider>
   );

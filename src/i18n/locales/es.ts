@@ -3,6 +3,9 @@ export const es = {
     back: 'Volver',
     pending: 'Pendiente',
     noLimit: 'Sin limite',
+    loading: 'Cargando...',
+    loadErrorTitle: 'No pudimos cargar la informacion',
+    retry: 'Intentar de nuevo',
   },
   tabs: {
     profile: 'Perfil',

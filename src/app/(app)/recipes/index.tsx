@@ -11,7 +11,7 @@ import {
   RecipeFilters,
   validateRecipeFilters,
 } from '@/components/recipe-filters';
-import { LoadingState } from '@/components/screen-state';
+import { ErrorState, LoadingState } from '@/components/screen-state';
 import { theme } from '@/constants/nutriedu-theme';
 import { useAuth } from '@/context/auth-context';
 import { apiRequest } from '@/services/api';
@@ -94,6 +94,9 @@ export default function RecipesScreen() {
   };
 
   if (loading) return <LoadingState label={t('recipes.loading')} />;
+  if (error && recipes.length === 0) {
+    return <ErrorState message={error} onRetry={() => { setLoading(true); void search(filters); }} />;
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>

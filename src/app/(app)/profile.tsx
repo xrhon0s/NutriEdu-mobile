@@ -300,7 +300,7 @@ export default function ProfileScreen() {
   };
 
   if (loading) return <LoadingState label="Cargando tu perfil..." />;
-  if (fatalError) return <ErrorState message={fatalError} />;
+  if (fatalError) return <ErrorState message={fatalError} onRetry={() => { setLoading(true); void loadProfile(); }} />;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>

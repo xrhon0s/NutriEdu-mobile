@@ -38,6 +38,10 @@ Implementado:
 - claves de progreso compatibles con las restricciones de Expo SecureStore en Android e iOS;
 - estado vacio de compras con acceso directo al plan semanal;
 - cierre de sesion ubicado en Perfil, identificado con texto e icono y protegido por confirmacion;
+- cierre automatico de sesiones expiradas con aviso al volver a Login;
+- errores de conectividad uniformes y reintento en Perfil, Recetas, detalle, Plan, Compras, Notificaciones e Historial medico;
+- validacion central de claves antes de acceder a SecureStore;
+- primera suite Vitest para contrato HTTP, expiracion de sesion y claves seguras;
 - formularios ajustables al teclado para mantener visibles las busquedas inferiores;
 - captura desde camara o galeria con permisos, vista previa y validacion de imagen;
 - intake multipart autenticado sin retencion de la imagen;
@@ -71,12 +75,14 @@ Implementado:
 
 Siguiente bloque:
 
-- inspeccionar Supabase y registrar o aplicar solo migraciones que superen la verificacion correspondiente;
-- completar nutrientes y porciones auditables del catalogo de recetas para elevar la confianza del ranking;
-- validar en dispositivo fisico compras detalladas y alternativas de recetas con un perfil restringido;
-- definir contenido localizado para catalogos, recetas y alertas del backend antes de habilitar ingles;
-- completar la migracion i18n de autenticacion, perfil, analisis y documentos;
-- completar la aceptacion de recordatorios locales en Android e iOS, todavia sin push remoto.
+- cerrar un recorrido de aceptacion fisica completo en iPhone y Android: registro, perfil, recetas, plan, compras, analisis, privacidad y recuperacion;
+- ampliar las pruebas automatizadas iniciales hacia componentes y recorridos end-to-end;
+- unificar componentes, estados de error/reintento, formularios y jerarquia visual antes de pulir cada pantalla;
+- completar i18n: aun existe copy directo en autenticacion, perfil, analisis, documentos y componentes de revision;
+- completar nutrientes y porciones auditables del catalogo de recetas para elevar la confianza del ranking y las cantidades de compras;
+- sustituir la extraccion de desarrollo de documentos medicos por OCR/IA real con revision humana;
+- validar recordatorios locales en builds nativos y desarrollar push remoto solo despues de esa aceptacion;
+- preparar un build SDK 57 reproducible, repositorio remoto mobile, observabilidad, estrategia OTA y checklist de tiendas.
 
 ## Requisitos
 
@@ -137,6 +143,7 @@ Expo Go sirve para aceptar navegación, autenticación, perfil, recetas, plan, c
 ## Validacion
 
 ```bash
+npm test
 npm run typecheck
 npm run lint
 npx expo export --platform all

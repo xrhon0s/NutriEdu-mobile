@@ -1,4 +1,5 @@
-import { PropsWithChildren, ReactNode } from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { PropsWithChildren, ReactNode, useState } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
@@ -39,11 +40,24 @@ export function AuthScreen({ title, subtitle, children }: PropsWithChildren<{ ti
   );
 }
 
-export function FormField({ label, ...props }: TextInputProps & { label: string }) {
+export function FormField({ label, secureTextEntry, ...props }: TextInputProps & { label: string }) {
+  const [passwordVisible, setPasswordVisible] = useState(false);
   return (
     <View style={styles.fieldGroup}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput style={styles.input} placeholderTextColor="#8A9890" autoCapitalize="none" {...props} />
+      <View style={styles.inputShell}>
+        <TextInput style={styles.input} placeholderTextColor="#8A9890" autoCapitalize="none" secureTextEntry={Boolean(secureTextEntry) && !passwordVisible} {...props} />
+        {secureTextEntry ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={passwordVisible ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+            onPress={() => setPasswordVisible((current) => !current)}
+            hitSlop={8}
+            style={styles.passwordToggle}>
+            <Ionicons name={passwordVisible ? 'eye-off-outline' : 'eye-outline'} size={21} color={theme.colors.textMuted} />
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -65,8 +79,8 @@ export function PrimaryButton({ label, loadingLabel, loading, onPress }: {
   );
 }
 
-export function FormMessage({ type, children }: { type: 'error' | 'success'; children: ReactNode }) {
-  return <Text style={type === 'error' ? styles.error : styles.success}>{children}</Text>;
+export function FormMessage({ type, children }: { type: 'error' | 'success' | 'info'; children: ReactNode }) {
+  return <Text style={type === 'error' ? styles.error : type === 'success' ? styles.success : styles.info}>{children}</Text>;
 }
 
 export function TextLink({ label, onPress }: { label: string; onPress: () => void }) {
@@ -90,9 +104,12 @@ const styles = StyleSheet.create({
   subtitle: { color: theme.colors.textMuted, fontSize: 15, lineHeight: 21, marginTop: theme.spacing.sm },
   error: { color: theme.colors.danger, backgroundColor: theme.colors.dangerSurface, borderRadius: theme.radius.small, padding: 12 },
   success: { color: theme.colors.primaryPressed, backgroundColor: theme.colors.surfaceMuted, borderRadius: theme.radius.small, padding: 12, lineHeight: 20 },
+  info: { color: theme.colors.text, backgroundColor: theme.colors.surfaceMuted, borderRadius: theme.radius.small, padding: 12, lineHeight: 20 },
   fieldGroup: { gap: theme.spacing.sm },
   label: { color: theme.colors.text, fontSize: 14, fontWeight: '700' },
-  input: { minHeight: 50, borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.medium, backgroundColor: theme.colors.surface, color: theme.colors.text, paddingHorizontal: 14, fontSize: 16 },
+  inputShell: { minHeight: 50, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.medium, backgroundColor: theme.colors.surface },
+  input: { minHeight: 48, flex: 1, color: theme.colors.text, paddingHorizontal: 14, fontSize: 16 },
+  passwordToggle: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
   button: { minHeight: 50, alignItems: 'center', justifyContent: 'center', borderRadius: theme.radius.medium, backgroundColor: theme.colors.primary },
   buttonPressed: { backgroundColor: theme.colors.primaryPressed },
   buttonDisabled: { opacity: 0.65 },

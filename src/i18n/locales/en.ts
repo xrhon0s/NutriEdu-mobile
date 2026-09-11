@@ -3,6 +3,9 @@ export const en = {
     back: 'Back',
     pending: 'Pending',
     noLimit: 'No limit',
+    loading: 'Loading...',
+    loadErrorTitle: 'We could not load the information',
+    retry: 'Try again',
   },
   tabs: {
     profile: 'Profile',

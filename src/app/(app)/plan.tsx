@@ -161,7 +161,7 @@ export default function PlanScreen() {
   };
 
   if (loading) return <LoadingState label={t('planner.loading')} />;
-  if (error && meals.length === 0) return <ErrorState message={error} />;
+  if (error && meals.length === 0) return <ErrorState message={error} onRetry={() => { setLoading(true); void loadPlan(); }} />;
 
   const selectedMeal = activeSlot ? getMeal(activeSlot.day, activeSlot.mealType) : undefined;
   const unsafeCount = meals.filter((meal) => meal.hasUnsafeIngredients).length;

@@ -6,7 +6,7 @@ import { useAuth } from '@/context/auth-context';
 import { theme } from '@/constants/nutriedu-theme';
 
 export default function LoginScreen() {
-  const { login } = useAuth();
+  const { login, notice, clearNotice } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -21,6 +21,7 @@ export default function LoginScreen() {
     try {
       setSubmitting(true);
       setError('');
+      clearNotice();
       await login(email, password);
       router.replace('/(app)/profile');
     } catch (loginError) {
@@ -33,6 +34,7 @@ export default function LoginScreen() {
   return (
     <AuthScreen title="Iniciar sesion" subtitle="Consulta tu perfil, recetas y plan desde el movil.">
       {error ? <FormMessage type="error">{error}</FormMessage> : null}
+      {!error && notice ? <FormMessage type="info">{notice}</FormMessage> : null}
       <FormField label="Correo electronico" value={email} onChangeText={setEmail} autoComplete="email" keyboardType="email-address" placeholder="nombre@correo.com" />
       <FormField label="Contrasena" value={password} onChangeText={setPassword} autoComplete="current-password" secureTextEntry placeholder="Tu contrasena" onSubmitEditing={handleLogin} />
       <PrimaryButton label="Ingresar" loadingLabel="Ingresando..." loading={submitting} onPress={handleLogin} />

@@ -16,7 +16,7 @@ import { ErrorState, LoadingState } from '@/components/screen-state';
 import { theme } from '@/constants/nutriedu-theme';
 import { useAuth } from '@/context/auth-context';
 import { apiRequest } from '@/services/api';
-import { storage } from '@/services/storage';
+import { scopedStorageKey, storage } from '@/services/storage';
 import { DetailedShoppingListResponse, ShoppingListItem } from '@/types/api';
 
 const CHECKED_KEY = 'nutriedu_shopping_checked';
@@ -81,14 +81,14 @@ export default function ShoppingScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
-  const progressKey = `${CHECKED_KEY}_${user?.id ?? 'guest'}`;
+  const progressKey = scopedStorageKey(CHECKED_KEY, user?.id ?? 'guest');
 
   const fetchList = useCallback(async () => {
     if (!user?.id) throw new Error(t('shopping.loadError'));
 
     const [result, saved] = await Promise.all([
       apiRequest<DetailedShoppingListResponse>(`/planner/${user.id}/shopping-list?detailed=true`, { token }),
-      storage.get(`${CHECKED_KEY}_${user.id}`),
+      storage.get(scopedStorageKey(CHECKED_KEY, user.id)),
     ]);
 
     return { result, saved: parseStoredProgress(saved, result) };
@@ -182,7 +182,20 @@ export default function ShoppingScreen() {
   };
 
   if (loading) return <LoadingState label={t('shopping.loading')} />;
-  if (error && shoppingData.items.length === 0) return <ErrorState message={error} />;
+  if (error && shoppingData.items.length === 0) {
+    return (
+      <ErrorState
+        message={error}
+        onRetry={() => {
+          setLoading(true);
+          void fetchList()
+            .then(applyList)
+            .catch((requestError) => setError(requestError instanceof Error ? requestError.message : t('shopping.loadError')))
+            .finally(() => setLoading(false));
+        }}
+      />
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>

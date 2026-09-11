@@ -142,7 +142,7 @@ export default function MedicalHistoryScreen() {
   };
 
   if (loading) return <LoadingState label="Cargando historial medico..." />;
-  if (error && items.length === 0) return <ErrorState message={error} />;
+  if (error && items.length === 0) return <ErrorState message={error} onRetry={() => { setLoading(true); void refresh(); }} />;
 
   return (
     <SafeAreaView style={styles.safeArea}>
