@@ -1,3 +1,5 @@
+import { profileEn } from './profile';
+
 export const en = {
   common: {
     back: 'Back',
@@ -65,6 +67,7 @@ export const en = {
     },
     notices: { sessionExpired: 'Your session expired. Log in again.' },
   },
+  profile: profileEn,
   tabs: {
     home: 'Home',
     profile: 'Profile',

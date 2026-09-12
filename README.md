@@ -34,6 +34,7 @@ Implementado:
 - filtros reutilizados en el selector de recetas del planificador;
 - base i18n con recursos estructurados y espanol como unico idioma habilitado en esta version;
 - autenticacion mobile completamente migrada a recursos espanol/ingles, incluidos errores conocidos y etiquetas accesibles;
+- interfaz estatica de Perfil bilingue: secciones, opciones, validaciones, estados y controles compartidos; los nombres de catalogo servidos por la API permanecen pendientes de localizacion en datos;
 - captura y revision completa del analisis visual disponibles en recursos espanol/ingles;
 - recursos ingleses de navegacion, recetas y notificaciones conservados solo como trabajo de desarrollo, sin selector publico hasta completar UI, catalogos y mensajes del backend;
 - plan semanal editable con busqueda de recetas compatibles;
@@ -93,7 +94,7 @@ Siguiente bloque:
 - cerrar un recorrido de aceptacion fisica completo en iPhone y Android: registro, perfil, recetas, plan, compras, analisis, privacidad y recuperacion;
 - ampliar las pruebas automatizadas iniciales hacia componentes y recorridos end-to-end;
 - continuar la jerarquia visual compartida en Analizar, Plan y Notificaciones, tomando Perfil como referencia;
-- completar i18n: aun existe copy directo en perfil, documentos medicos y algunos componentes secundarios;
+- completar i18n: aun existe copy directo en documentos medicos y algunos componentes secundarios; objetivos, condiciones y restricciones requieren catalogos localizables desde la API;
 - completar nutrientes y porciones auditables del catalogo de recetas para elevar la confianza del ranking y las cantidades de compras;
 - sustituir la extraccion de desarrollo de documentos medicos por OCR/IA real con revision humana;
 - validar recordatorios locales en builds nativos y desarrollar push remoto solo despues de esa aceptacion;

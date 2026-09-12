@@ -12,6 +12,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import {
   ChoiceField,
   FormField,
@@ -64,14 +66,12 @@ type ProfileData = {
 
 const tabs: {
   id: ProfileTab;
-  label: string;
-  description: string;
   icon: React.ComponentProps<typeof Ionicons>['name'];
 }[] = [
-  { id: 'personal', label: 'Personal', description: 'Datos, actividad y habitos', icon: 'person-outline' },
-  { id: 'goals', label: 'Objetivos', description: 'Prioridades del proceso', icon: 'flag-outline' },
-  { id: 'clinical', label: 'Salud', description: 'Condiciones y restricciones', icon: 'medkit-outline' },
-  { id: 'targets', label: 'Metas', description: 'Limites nutricionales', icon: 'options-outline' },
+  { id: 'personal', icon: 'person-outline' },
+  { id: 'goals', icon: 'flag-outline' },
+  { id: 'clinical', icon: 'medkit-outline' },
+  { id: 'targets', icon: 'options-outline' },
 ];
 
 const featuredConditionCodes = [
@@ -84,8 +84,6 @@ const featuredConditionCodes = [
 ];
 
 const featuredRestrictionNames = ['gluten', 'lactosa', 'azucar', 'frutos secos', 'mariscos', 'huevo'];
-
-const dietStyleInfo = 'Omnivoro incluye alimentos vegetales y animales. Vegetariano evita carnes y pescado, pero puede incluir huevos o lacteos. Vegano excluye productos de origen animal. Pescetariano incluye pescado y mariscos, pero evita otras carnes.';
 
 const emptyPersonal: PersonalForm = {
   fecha_nacimiento: '',
@@ -118,20 +116,14 @@ const emptyTargets: TargetsForm = {
   notes: '',
 };
 
-const targetFields: { key: keyof TargetsForm; label: string; unit: string }[] = [
-  { key: 'calories_min', label: 'Calorias minimas diarias', unit: 'kcal' },
-  { key: 'calories_max', label: 'Calorias maximas diarias', unit: 'kcal' },
-  { key: 'protein_min_g', label: 'Proteina minima diaria', unit: 'g' },
-  { key: 'protein_max_g', label: 'Proteina maxima diaria', unit: 'g' },
-  { key: 'carbs_min_g', label: 'Carbohidratos minimos diarios', unit: 'g' },
-  { key: 'carbs_max_g', label: 'Carbohidratos maximos diarios', unit: 'g' },
-  { key: 'fat_min_g', label: 'Grasas minimas diarias', unit: 'g' },
-  { key: 'fat_max_g', label: 'Grasas maximas diarias', unit: 'g' },
-  { key: 'saturated_fat_max_g', label: 'Grasa saturada maxima diaria', unit: 'g' },
-  { key: 'sugar_max_g', label: 'Azucar maxima diaria', unit: 'g' },
-  { key: 'fiber_min_g', label: 'Fibra minima diaria', unit: 'g' },
-  { key: 'sodium_max_mg', label: 'Sodio maximo diario', unit: 'mg' },
-  { key: 'water_min_ml', label: 'Agua minima diaria', unit: 'ml' },
+const targetFields: { key: keyof TargetsForm; unit: string }[] = [
+  { key: 'calories_min', unit: 'kcal' }, { key: 'calories_max', unit: 'kcal' },
+  { key: 'protein_min_g', unit: 'g' }, { key: 'protein_max_g', unit: 'g' },
+  { key: 'carbs_min_g', unit: 'g' }, { key: 'carbs_max_g', unit: 'g' },
+  { key: 'fat_min_g', unit: 'g' }, { key: 'fat_max_g', unit: 'g' },
+  { key: 'saturated_fat_max_g', unit: 'g' }, { key: 'sugar_max_g', unit: 'g' },
+  { key: 'fiber_min_g', unit: 'g' }, { key: 'sodium_max_mg', unit: 'mg' },
+  { key: 'water_min_ml', unit: 'ml' },
 ];
 
 const toText = (value: string | number | null | undefined) => (value == null ? '' : String(value));
@@ -160,6 +152,7 @@ const toggleValue = <T,>(values: T[], value: T) =>
 
 export default function ProfileScreen() {
   const { token, user } = useAuth();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<ProfileTab>('personal');
   const [profile, setProfile] = useState<PersonalForm>(emptyPersonal);
   const [targets, setTargets] = useState<TargetsForm>(emptyTargets);
@@ -224,13 +217,13 @@ export default function ProfileScreen() {
     try {
       setFatalError('');
       applyProfileData(await fetchProfileData());
-    } catch (requestError) {
-      setFatalError(requestError instanceof Error ? requestError.message : 'Error consultando el perfil');
+    } catch {
+      setFatalError(t('profile.errors.load'));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [applyProfileData, fetchProfileData]);
+  }, [applyProfileData, fetchProfileData, t]);
 
   useFocusEffect(useCallback(() => {
     void loadProfile();
@@ -243,10 +236,10 @@ export default function ProfileScreen() {
       await action();
       applyProfileData(await fetchProfileData());
       setStatus({ type: 'success', message: successMessage });
-    } catch (requestError) {
+    } catch {
       setStatus({
         type: 'error',
-        message: requestError instanceof Error ? requestError.message : 'No pudimos guardar los cambios',
+        message: t('profile.errors.save'),
       });
     } finally {
       setSaving(null);
@@ -254,7 +247,7 @@ export default function ProfileScreen() {
   };
 
   const savePersonal = () => {
-    const validationError = validatePersonal(profile);
+    const validationError = validatePersonal(profile, t);
     if (validationError) return setStatus({ type: 'error', message: validationError });
 
     return runSave(
@@ -280,14 +273,14 @@ export default function ProfileScreen() {
           notas: profile.notas,
         }),
       }),
-      'Datos personales actualizados',
+      t('profile.messages.personalSaved'),
     );
   };
 
   const saveGoals = () => runSave(
     'goals',
     () => apiRequest('/profile/goals', { method: 'PUT', token, body: JSON.stringify({ goals: selectedGoals }) }),
-    'Objetivos actualizados',
+    t('profile.messages.goalsSaved'),
   );
 
   const saveClinical = () => runSave(
@@ -304,11 +297,11 @@ export default function ProfileScreen() {
         body: JSON.stringify({ restricciones: selectedRestrictions }),
       }),
     ]),
-    'Salud y restricciones actualizadas',
+    t('profile.messages.clinicalSaved'),
   );
 
   const saveTargets = () => {
-    const validationError = validateTargets(targets);
+    const validationError = validateTargets(targets, t);
     if (validationError) return setStatus({ type: 'error', message: validationError });
 
     return runSave(
@@ -318,11 +311,11 @@ export default function ProfileScreen() {
         token,
         body: JSON.stringify({ ...targets, calculation_source: 'manual' }),
       }),
-      'Metas nutricionales actualizadas',
+      t('profile.messages.targetsSaved'),
     );
   };
 
-  if (loading) return <LoadingState label="Cargando tu perfil..." />;
+  if (loading) return <LoadingState label={t('profile.loading')} />;
   if (fatalError) return <ErrorState message={fatalError} onRetry={() => { setLoading(true); void loadProfile(); }} />;
 
   return (
@@ -337,27 +330,27 @@ export default function ProfileScreen() {
           contentContainerStyle={styles.content}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadProfile(); }} tintColor={theme.colors.primary} />}>
         <View style={styles.hero}>
-          <Text style={styles.eyebrow}>PERFIL DE SALUD</Text>
-          <Text style={styles.title}>Hola, {user?.nombre?.split(' ')[0] || 'Usuario'}</Text>
-          <Text style={styles.subtitle}>Estas señales se usan para adaptar recetas, alertas y recomendaciones.</Text>
+          <Text style={styles.eyebrow}>{t('profile.eyebrow')}</Text>
+          <Text style={styles.title}>{t('profile.greeting', { name: user?.nombre?.split(' ')[0] || t('profile.userFallback') })}</Text>
+          <Text style={styles.subtitle}>{t('profile.subtitle')}</Text>
           <View style={styles.signalSummary}>
             <View style={styles.signalSummaryHeader}>
               <View style={styles.signalSummaryIcon}>
                 <Ionicons name="sparkles-outline" size={19} color={theme.colors.primaryPressed} />
               </View>
               <View style={styles.signalSummaryCopy}>
-                <Text style={styles.signalSummaryTitle}>Perfil de recomendacion</Text>
+                <Text style={styles.signalSummaryTitle}>{t('profile.summary.title')}</Text>
                 <Text style={styles.signalSummaryText}>
                   {selectedGoals.length
-                    ? `${selectedGoals.length} objetivo${selectedGoals.length === 1 ? '' : 's'} activo${selectedGoals.length === 1 ? '' : 's'}`
-                    : 'Selecciona al menos un objetivo para personalizar mejor tus resultados'}
+                    ? t('profile.summary.activeGoals', { count: selectedGoals.length })
+                    : t('profile.summary.noGoals')}
                 </Text>
               </View>
             </View>
             <View style={styles.signalStats}>
-              <SignalStat value={`${personalSignals}/8`} label="Datos base" />
-              <SignalStat value={String(selectedConditions.length + selectedRestrictions.length)} label="Alertas" />
-              <SignalStat value={String(targetSignals)} label="Metas" />
+              <SignalStat value={`${personalSignals}/8`} label={t('profile.summary.baseData')} />
+              <SignalStat value={String(selectedConditions.length + selectedRestrictions.length)} label={t('profile.summary.alerts')} />
+              <SignalStat value={String(targetSignals)} label={t('profile.summary.targets')} />
             </View>
           </View>
         </View>
@@ -376,15 +369,15 @@ export default function ProfileScreen() {
                   <Ionicons name={tab.icon} size={18} color={active ? theme.colors.primaryPressed : theme.colors.textMuted} />
                   <Text style={[styles.tabCount, active && styles.activeTabText]}>{tabCounts[tab.id]}</Text>
                 </View>
-                <Text style={[styles.tabText, active && styles.activeTabText]}>{tab.label}</Text>
+                <Text style={[styles.tabText, active && styles.activeTabText]}>{t(`profile.tabs.${tab.id}.label`)}</Text>
               </Pressable>
             );
           })}
         </ScrollView>
 
         <View style={styles.activeSectionHeading}>
-          <Text style={styles.activeSectionTitle}>{activeTabConfig.label}</Text>
-          <Text style={styles.activeSectionDescription}>{activeTabConfig.description}</Text>
+          <Text style={styles.activeSectionTitle}>{t(`profile.tabs.${activeTabConfig.id}.label`)}</Text>
+          <Text style={styles.activeSectionDescription}>{t(`profile.tabs.${activeTabConfig.id}.description`)}</Text>
         </View>
 
         {status ? (
@@ -463,67 +456,68 @@ function PersonalView({ form, setForm, saving, onSave }: {
   onSave: () => void;
 }) {
   const router = useRouter();
+  const { t } = useTranslation();
   const update = (key: keyof PersonalForm, value: string) => setForm((current) => ({ ...current, [key]: value }));
 
   return (
     <View style={styles.panel}>
-      <FormSection title="Datos personales">
-        <DateField label="Fecha de nacimiento" value={form.fecha_nacimiento} onChange={(value) => update('fecha_nacimiento', value)} />
-        <ChoiceField label="Sexo" value={form.sexo} onChange={(value) => update('sexo', value)} choices={[
-          { value: 'female', label: 'Femenino' },
-          { value: 'male', label: 'Masculino' },
-          { value: 'other', label: 'Otro' },
-          { value: 'prefer_not_to_say', label: 'Prefiero no indicarlo' },
+      <FormSection title={t('profile.personal.personalData')}>
+        <DateField label={t('profile.personal.birthDate')} value={form.fecha_nacimiento} onChange={(value) => update('fecha_nacimiento', value)} />
+        <ChoiceField label={t('profile.personal.sex')} value={form.sexo} onChange={(value) => update('sexo', value)} choices={[
+          { value: 'female', label: t('profile.personal.sexOptions.female') },
+          { value: 'male', label: t('profile.personal.sexOptions.male') },
+          { value: 'other', label: t('profile.personal.sexOptions.other') },
+          { value: 'prefer_not_to_say', label: t('profile.personal.sexOptions.preferNotToSay') },
         ]} />
         <View style={styles.fieldPair}>
-          <View style={styles.pairedField}><FormField label="Estatura" value={form.estatura_cm} unit="cm" keyboardType="decimal-pad" onChangeText={(value) => update('estatura_cm', value)} /></View>
-          <View style={styles.pairedField}><FormField label="Peso actual" value={form.peso_kg} unit="kg" keyboardType="decimal-pad" onChangeText={(value) => update('peso_kg', value)} /></View>
+          <View style={styles.pairedField}><FormField label={t('profile.personal.height')} value={form.estatura_cm} unit="cm" keyboardType="decimal-pad" onChangeText={(value) => update('estatura_cm', value)} /></View>
+          <View style={styles.pairedField}><FormField label={t('profile.personal.weight')} value={form.peso_kg} unit="kg" keyboardType="decimal-pad" onChangeText={(value) => update('peso_kg', value)} /></View>
         </View>
       </FormSection>
 
-      <FormSection title="Actividad y condicion fisica">
-        <ChoiceField label="Nivel de actividad" value={form.nivel_actividad} onChange={(value) => update('nivel_actividad', value)} choices={[
-          { value: 'sedentary', label: 'Sedentario' },
-          { value: 'light', label: 'Ligera' },
-          { value: 'moderate', label: 'Moderada' },
-          { value: 'high', label: 'Alta' },
-          { value: 'athlete', label: 'Intensa' },
+      <FormSection title={t('profile.personal.activitySection')}>
+        <ChoiceField label={t('profile.personal.activityLevel')} value={form.nivel_actividad} onChange={(value) => update('nivel_actividad', value)} choices={[
+          { value: 'sedentary', label: t('profile.personal.activityOptions.sedentary') },
+          { value: 'light', label: t('profile.personal.activityOptions.light') },
+          { value: 'moderate', label: t('profile.personal.activityOptions.moderate') },
+          { value: 'high', label: t('profile.personal.activityOptions.high') },
+          { value: 'athlete', label: t('profile.personal.activityOptions.athlete') },
         ]} />
-        <ChoiceField label="Condicion fisica actual" value={form.condicion_fisica} onChange={(value) => update('condicion_fisica', value)} choices={[
-          { value: 'starting', label: 'Iniciando' },
-          { value: 'active', label: 'Activo' },
-          { value: 'trained', label: 'Entrenado' },
-          { value: 'limited', label: 'Limitada' },
-          { value: 'recovery', label: 'Recuperacion' },
+        <ChoiceField label={t('profile.personal.physicalCondition')} value={form.condicion_fisica} onChange={(value) => update('condicion_fisica', value)} choices={[
+          { value: 'starting', label: t('profile.personal.conditionOptions.starting') },
+          { value: 'active', label: t('profile.personal.conditionOptions.active') },
+          { value: 'trained', label: t('profile.personal.conditionOptions.trained') },
+          { value: 'limited', label: t('profile.personal.conditionOptions.limited') },
+          { value: 'recovery', label: t('profile.personal.conditionOptions.recovery') },
         ]} />
       </FormSection>
 
-      <FormSection title="Habitos alimentarios">
-        <FormField label="Comidas por dia" value={form.meals_per_day} keyboardType="number-pad" onChangeText={(value) => update('meals_per_day', value)} />
-        <ChoiceField label="Comidas fuera de casa" value={form.eats_out_frequency} onChange={(value) => update('eats_out_frequency', value)} choices={[
-          { value: 'rarely', label: 'Casi nunca' },
-          { value: 'weekly', label: '1 a 2 por semana' },
-          { value: 'frequent', label: '3 o mas por semana' },
-          { value: 'daily', label: 'Todos los dias' },
+      <FormSection title={t('profile.personal.eatingHabits')}>
+        <FormField label={t('profile.personal.mealsPerDay')} value={form.meals_per_day} keyboardType="number-pad" onChangeText={(value) => update('meals_per_day', value)} />
+        <ChoiceField label={t('profile.personal.eatingOut')} value={form.eats_out_frequency} onChange={(value) => update('eats_out_frequency', value)} choices={[
+          { value: 'rarely', label: t('profile.personal.eatingOutOptions.rarely') },
+          { value: 'weekly', label: t('profile.personal.eatingOutOptions.weekly') },
+          { value: 'frequent', label: t('profile.personal.eatingOutOptions.frequent') },
+          { value: 'daily', label: t('profile.personal.eatingOutOptions.daily') },
         ]} />
-        <ChoiceField label="Estilo alimentario" value={form.diet_style} info={dietStyleInfo} onChange={(value) => update('diet_style', value)} choices={[
-          { value: 'omnivore', label: 'Omnivoro' },
-          { value: 'vegetarian', label: 'Vegetariano' },
-          { value: 'vegan', label: 'Vegano' },
-          { value: 'pescatarian', label: 'Pescetariano' },
+        <ChoiceField label={t('profile.personal.dietStyle')} value={form.diet_style} info={t('profile.personal.dietStyleInfo')} onChange={(value) => update('diet_style', value)} choices={[
+          { value: 'omnivore', label: t('profile.personal.dietOptions.omnivore') },
+          { value: 'vegetarian', label: t('profile.personal.dietOptions.vegetarian') },
+          { value: 'vegan', label: t('profile.personal.dietOptions.vegan') },
+          { value: 'pescatarian', label: t('profile.personal.dietOptions.pescatarian') },
         ]} />
-        <ChoiceField label="Tiempo disponible para cocinar" value={form.cooking_time} onChange={(value) => update('cooking_time', value)} choices={[
-          { value: 'short', label: 'Menos de 20 min' },
-          { value: 'medium', label: '20 a 45 min' },
-          { value: 'long', label: 'Mas de 45 min' },
+        <ChoiceField label={t('profile.personal.cookingTime')} value={form.cooking_time} onChange={(value) => update('cooking_time', value)} choices={[
+          { value: 'short', label: t('profile.personal.cookingOptions.short') },
+          { value: 'medium', label: t('profile.personal.cookingOptions.medium') },
+          { value: 'long', label: t('profile.personal.cookingOptions.long') },
         ]} />
-        <FormField label="Notas adicionales" value={form.notas} multiline onChangeText={(value) => update('notas', value)} />
+        <FormField label={t('profile.personal.notes')} value={form.notas} multiline onChangeText={(value) => update('notas', value)} />
       </FormSection>
-      <SaveButton label="Guardar datos personales" saving={saving} onPress={onSave} />
-      <FormSection title="Cuenta y preferencias" description="Configuraciones que no cambian tus datos clinicos.">
+      <SaveButton label={t('profile.personal.save')} saving={saving} onPress={onSave} />
+      <FormSection title={t('profile.personal.account')} description={t('profile.personal.accountDescription')}>
         <View style={styles.linkGroup}>
-          <ProfileLink icon="notifications-outline" title="Notificaciones" description="Bandeja, categorias y horas silenciosas" onPress={() => router.push('/notifications')} />
-          <ProfileLink icon="shield-checkmark-outline" title="Privacidad y cuenta" description="Retencion de datos y eliminacion de cuenta" onPress={() => router.push('/privacy-center')} divider={false} />
+          <ProfileLink icon="notifications-outline" title={t('profile.personal.notifications')} description={t('profile.personal.notificationsDescription')} onPress={() => router.push('/notifications')} />
+          <ProfileLink icon="shield-checkmark-outline" title={t('profile.personal.privacy')} description={t('profile.personal.privacyDescription')} onPress={() => router.push('/privacy-center')} divider={false} />
         </View>
       </FormSection>
     </View>
@@ -537,16 +531,17 @@ function GoalsView({ goals, selected, onToggle, saving, onSave }: {
   saving: boolean;
   onSave: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.panel}>
-      <FormSection title="Objetivos prioritarios">
+      <FormSection title={t('profile.goals.title')}>
         {goals.map((goal) => {
           const priority = selected.indexOf(goal.code);
-          return <SelectableRow key={goal.code} title={goal.nombre} description={goal.descripcion} selected={priority >= 0} detail={priority >= 0 ? `Prioridad ${priority + 1}` : undefined} onPress={() => onToggle(goal.code)} />;
+          return <SelectableRow key={goal.code} title={goal.nombre} description={goal.descripcion} selected={priority >= 0} detail={priority >= 0 ? t('profile.goals.priority', { number: priority + 1 }) : undefined} onPress={() => onToggle(goal.code)} />;
         })}
       </FormSection>
-      <Text style={styles.selectionCount}>{selected.length} objetivos seleccionados</Text>
-      <SaveButton label="Guardar objetivos" saving={saving} onPress={onSave} />
+      <Text style={styles.selectionCount}>{t('profile.goals.selected', { count: selected.length })}</Text>
+      <SaveButton label={t('profile.goals.save')} saving={saving} onPress={onSave} />
     </View>
   );
 }
@@ -562,6 +557,7 @@ function ClinicalView({ conditions, selectedConditions, onToggleCondition, restr
   onSave: () => void;
 }) {
   const router = useRouter();
+  const { t } = useTranslation();
   const [conditionQuery, setConditionQuery] = useState('');
   const [restrictionQuery, setRestrictionQuery] = useState('');
   const visibleConditions = visibleCatalogItems(
@@ -581,30 +577,30 @@ function ClinicalView({ conditions, selectedConditions, onToggleCondition, restr
 
   return (
     <View style={styles.panel}>
-      <View style={styles.guidance}><Text style={styles.guidanceText}>Registra condiciones confirmadas. Las marcadas requieren seguimiento profesional.</Text></View>
-      <FormSection title="Expediente" description="Documentos y cambios que requieren revision del usuario.">
+      <View style={styles.guidance}><Text style={styles.guidanceText}>{t('profile.clinical.guidance')}</Text></View>
+      <FormSection title={t('profile.clinical.records')} description={t('profile.clinical.recordsDescription')}>
         <View style={styles.linkGroup}>
-          <ProfileLink icon="document-lock-outline" title="Documentos medicos" description="Subir formula, laboratorio o indicacion nutricional" onPress={() => router.push('/medical-documents')} />
-          <ProfileLink icon="time-outline" title="Historial medico" description="Revisiones, cambios aplicados y retencion" onPress={() => router.push('/medical-history')} divider={false} />
+          <ProfileLink icon="document-lock-outline" title={t('profile.clinical.documents')} description={t('profile.clinical.documentsDescription')} onPress={() => router.push('/medical-documents')} />
+          <ProfileLink icon="time-outline" title={t('profile.clinical.history')} description={t('profile.clinical.historyDescription')} onPress={() => router.push('/medical-history')} divider={false} />
         </View>
       </FormSection>
-      <FormSection title="Condiciones clinicas">
-        <SearchField value={conditionQuery} onChangeText={setConditionQuery} placeholder="Buscar condicion" />
-        <Text style={styles.listMeta}>{conditionQuery ? `${visibleConditions.length} resultados` : 'Condiciones frecuentes'}</Text>
+      <FormSection title={t('profile.clinical.conditions')}>
+        <SearchField value={conditionQuery} onChangeText={setConditionQuery} placeholder={t('profile.clinical.searchCondition')} />
+        <Text style={styles.listMeta}>{conditionQuery ? t('profile.clinical.results', { count: visibleConditions.length }) : t('profile.clinical.frequentConditions')}</Text>
         {visibleConditions.map((condition) => (
-          <SelectableRow key={condition.code} title={condition.nombre} description={condition.descripcion} selected={selectedConditions.includes(condition.code)} detail={condition.requires_professional_guidance ? 'SEGUIMIENTO' : undefined} onPress={() => onToggleCondition(condition.code)} />
+          <SelectableRow key={condition.code} title={condition.nombre} description={condition.descripcion} selected={selectedConditions.includes(condition.code)} detail={condition.requires_professional_guidance ? t('profile.clinical.followUp') : undefined} onPress={() => onToggleCondition(condition.code)} />
         ))}
-        {!visibleConditions.length ? <Text style={styles.emptyResults}>No encontramos condiciones con ese nombre.</Text> : null}
+        {!visibleConditions.length ? <Text style={styles.emptyResults}>{t('profile.clinical.noConditions')}</Text> : null}
       </FormSection>
-      <FormSection title="Restricciones alimentarias">
-        <SearchField value={restrictionQuery} onChangeText={setRestrictionQuery} placeholder="Buscar restriccion" />
-        <Text style={styles.listMeta}>{restrictionQuery ? `${visibleRestrictions.length} resultados` : 'Restricciones frecuentes'}</Text>
+      <FormSection title={t('profile.clinical.restrictions')}>
+        <SearchField value={restrictionQuery} onChangeText={setRestrictionQuery} placeholder={t('profile.clinical.searchRestriction')} />
+        <Text style={styles.listMeta}>{restrictionQuery ? t('profile.clinical.results', { count: visibleRestrictions.length }) : t('profile.clinical.frequentRestrictions')}</Text>
         {visibleRestrictions.map((restriction) => (
           <SelectableRow key={restriction.restriccion_id} title={restriction.nombre} selected={selectedRestrictions.includes(Number(restriction.restriccion_id))} onPress={() => onToggleRestriction(Number(restriction.restriccion_id))} />
         ))}
-        {!visibleRestrictions.length ? <Text style={styles.emptyResults}>No encontramos restricciones con ese nombre.</Text> : null}
+        {!visibleRestrictions.length ? <Text style={styles.emptyResults}>{t('profile.clinical.noRestrictions')}</Text> : null}
       </FormSection>
-      <SaveButton label="Guardar salud y restricciones" saving={saving} onPress={onSave} />
+      <SaveButton label={t('profile.clinical.save')} saving={saving} onPress={onSave} />
     </View>
   );
 }
@@ -615,27 +611,28 @@ function TargetsView({ form, setForm, saving, onSave }: {
   saving: boolean;
   onSave: () => void;
 }) {
+  const { t } = useTranslation();
   const update = (key: keyof TargetsForm, value: string) => setForm((current) => ({ ...current, [key]: value }));
 
   return (
     <View style={styles.panel}>
-      <View style={styles.guidance}><Text style={styles.guidanceText}>Usa valores definidos con un profesional. Los campos vacios no generan alertas.</Text></View>
-      <FormSection title="Metas y limites diarios">
+      <View style={styles.guidance}><Text style={styles.guidanceText}>{t('profile.targets.guidance')}</Text></View>
+      <FormSection title={t('profile.targets.title')}>
         {targetFields.map((field) => (
-          <FormField key={field.key} label={field.label} value={form[field.key]} unit={field.unit} keyboardType="decimal-pad" onChangeText={(value) => update(field.key, value)} />
+          <FormField key={field.key} label={t(`profile.targets.fields.${field.key}`)} value={form[field.key]} unit={field.unit} keyboardType="decimal-pad" onChangeText={(value) => update(field.key, value)} />
         ))}
-        <FormField label="Notas de las metas" value={form.notes} multiline onChangeText={(value) => update('notes', value)} />
+        <FormField label={t('profile.targets.notes')} value={form.notes} multiline onChangeText={(value) => update('notes', value)} />
       </FormSection>
-      <SaveButton label="Guardar metas nutricionales" saving={saving} onPress={onSave} />
+      <SaveButton label={t('profile.targets.save')} saving={saving} onPress={onSave} />
     </View>
   );
 }
 
-function validatePersonal(form: PersonalForm) {
-  if (form.fecha_nacimiento && !/^\d{4}-\d{2}-\d{2}$/.test(form.fecha_nacimiento)) return 'La fecha debe usar el formato AAAA-MM-DD';
+function validatePersonal(form: PersonalForm, t: TFunction) {
+  if (form.fecha_nacimiento && !/^\d{4}-\d{2}-\d{2}$/.test(form.fecha_nacimiento)) return t('profile.validation.date');
 
-  for (const [value, label] of [[form.estatura_cm, 'estatura'], [form.peso_kg, 'peso'], [form.meals_per_day, 'comidas por dia']]) {
-    if (value && (!Number.isFinite(Number(value)) || Number(value) <= 0)) return `Revisa el valor de ${label}`;
+  for (const [value, field] of [[form.estatura_cm, 'height'], [form.peso_kg, 'weight'], [form.meals_per_day, 'meals']] as const) {
+    if (value && (!Number.isFinite(Number(value)) || Number(value) <= 0)) return t('profile.validation.positive', { field: t(`profile.validation.fields.${field}`) });
   }
   return '';
 }
@@ -662,20 +659,20 @@ function visibleCatalogItems<T>(
   return selected.length >= 6 ? selected : [...selected, ...featured].slice(0, 6);
 }
 
-function validateTargets(form: TargetsForm) {
+function validateTargets(form: TargetsForm, t: TFunction) {
   for (const field of targetFields) {
     const value = form[field.key];
-    if (value && (!Number.isFinite(Number(value)) || Number(value) < 0)) return `Revisa ${field.label.toLowerCase()}`;
+    if (value && (!Number.isFinite(Number(value)) || Number(value) < 0)) return t('profile.validation.target', { field: t(`profile.targets.fields.${field.key}`) });
   }
 
   const ranges: [keyof TargetsForm, keyof TargetsForm, string][] = [
-    ['calories_min', 'calories_max', 'calorias'],
-    ['protein_min_g', 'protein_max_g', 'proteina'],
-    ['carbs_min_g', 'carbs_max_g', 'carbohidratos'],
-    ['fat_min_g', 'fat_max_g', 'grasas'],
+    ['calories_min', 'calories_max', 'calories'],
+    ['protein_min_g', 'protein_max_g', 'protein'],
+    ['carbs_min_g', 'carbs_max_g', 'carbs'],
+    ['fat_min_g', 'fat_max_g', 'fat'],
   ];
   for (const [minKey, maxKey, label] of ranges) {
-    if (form[minKey] && form[maxKey] && Number(form[minKey]) > Number(form[maxKey])) return `El minimo de ${label} no puede superar el maximo`;
+    if (form[minKey] && form[maxKey] && Number(form[minKey]) > Number(form[maxKey])) return t('profile.validation.range', { field: t(`profile.validation.fields.${label}`) });
   }
   return '';
 }

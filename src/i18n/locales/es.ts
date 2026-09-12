@@ -1,3 +1,5 @@
+import { profileEs } from './profile';
+
 export const es = {
   common: {
     back: 'Volver',
@@ -65,6 +67,7 @@ export const es = {
     },
     notices: { sessionExpired: 'Tu sesion expiro. Inicia sesion nuevamente.' },
   },
+  profile: profileEs,
   tabs: {
     home: 'Inicio',
     profile: 'Perfil',

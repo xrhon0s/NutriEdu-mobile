@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { theme } from '@/constants/nutriedu-theme';
+import { useTranslation } from 'react-i18next';
 
 export type Choice = { value: string; label: string };
 
@@ -85,6 +86,7 @@ export function ChoiceField({
   info?: string;
 }) {
   const [showInfo, setShowInfo] = useState(false);
+  const { t } = useTranslation();
 
   return (
     <View style={styles.field}>
@@ -93,7 +95,7 @@ export function ChoiceField({
         {info ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Informacion sobre ${label}`}
+            accessibilityLabel={t('profile.controls.infoAbout', { label })}
             onPress={() => setShowInfo((current) => !current)}
             hitSlop={8}
             style={styles.infoButton}>
@@ -134,6 +136,7 @@ export function SearchField({
   onChangeText: (value: string) => void;
   placeholder: string;
 }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.searchShell}>
       <Ionicons name="search-outline" size={20} color={theme.colors.textMuted} />
@@ -148,7 +151,7 @@ export function SearchField({
         style={styles.searchInput}
       />
       {value ? (
-        <Pressable accessibilityRole="button" accessibilityLabel="Limpiar busqueda" onPress={() => onChangeText('')} hitSlop={8}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('profile.controls.clearSearch')} onPress={() => onChangeText('')} hitSlop={8}>
           <Ionicons name="close-circle" size={20} color={theme.colors.textMuted} />
         </Pressable>
       ) : null}
@@ -196,6 +199,7 @@ export function SelectableRow({
 }
 
 export function SaveButton({ label, saving, onPress }: { label: string; saving: boolean; onPress: () => void }) {
+  const { t } = useTranslation();
   return (
     <Pressable
       accessibilityRole="button"
@@ -203,7 +207,7 @@ export function SaveButton({ label, saving, onPress }: { label: string; saving: 
       onPress={onPress}
       style={({ pressed }) => [styles.saveButton, saving && styles.disabled, pressed && styles.pressed]}>
       {saving ? <ActivityIndicator color="#FFFFFF" /> : <Ionicons name="save-outline" size={19} color="#FFFFFF" />}
-      <Text style={styles.saveText}>{saving ? 'Guardando...' : label}</Text>
+      <Text style={styles.saveText}>{saving ? t('profile.controls.saving') : label}</Text>
     </Pressable>
   );
 }
