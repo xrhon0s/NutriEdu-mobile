@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -22,13 +23,19 @@ import { ErrorState, LoadingState } from '@/components/screen-state';
 import { theme } from '@/constants/nutriedu-theme';
 import { useAuth } from '@/context/auth-context';
 import { apiRequest } from '@/services/api';
-import { scheduleLocalNotificationTest, synchronizeLocalReminders } from '@/services/local-notifications';
+import {
+  inspectLocalNotifications,
+  LocalNotificationStatus,
+  scheduleLocalNotificationTest,
+  synchronizeLocalReminders,
+} from '@/services/local-notifications';
 import { InAppNotification, NotificationListResponse, NotificationPreferences } from '@/types/api';
 
 type ViewMode = 'inbox' | 'preferences';
 type PreferenceKey = 'mealReminders' | 'weeklyPlan' | 'shopping' | 'progress' | 'security';
 
 const preferenceKeys: PreferenceKey[] = ['mealReminders', 'weeklyPlan', 'shopping', 'progress', 'security'];
+const deviceTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 const preferenceIcons: Record<PreferenceKey, React.ComponentProps<typeof Ionicons>['name']> = {
   mealReminders: 'restaurant-outline',
   weeklyPlan: 'calendar-outline',
@@ -46,6 +53,8 @@ export default function NotificationsScreen() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [nextCursor, setNextCursor] = useState<number | null>(null);
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
+  const [savedPreferencesSignature, setSavedPreferencesSignature] = useState('');
+  const [localStatus, setLocalStatus] = useState<LocalNotificationStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -68,11 +77,14 @@ export default function NotificationsScreen() {
     try {
       setError('');
       setStatus('');
-      const [, preferenceResult] = await Promise.all([
+      const [, preferenceResult, notificationStatus] = await Promise.all([
         loadInbox(),
         apiRequest<NotificationPreferences>('/notifications/preferences', { token }),
+        inspectLocalNotifications(),
       ]);
       setPreferences(preferenceResult);
+      setSavedPreferencesSignature(JSON.stringify(preferenceResult));
+      setLocalStatus(notificationStatus);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : t('notifications.loadError'));
     } finally {
@@ -148,8 +160,15 @@ export default function NotificationsScreen() {
         body: JSON.stringify(preferences),
       });
       setPreferences(result);
+      setSavedPreferencesSignature(JSON.stringify(result));
       try {
         const reminderResult = await synchronizeLocalReminders(result, i18n.resolvedLanguage);
+        setLocalStatus({
+          permission: reminderResult.status === 'scheduled'
+            ? 'granted'
+            : reminderResult.status === 'permission-denied' ? 'denied' : 'unsupported',
+          scheduledCount: reminderResult.scheduledCount,
+        });
         if (reminderResult.status === 'permission-denied') {
           setStatus(t('notifications.savedPermissionDenied'));
         } else if (reminderResult.status === 'unsupported') {
@@ -178,6 +197,7 @@ export default function NotificationsScreen() {
       setError('');
       setStatus('');
       const result = await scheduleLocalNotificationTest(i18n.resolvedLanguage);
+      setLocalStatus(await inspectLocalNotifications());
       if (result.status === 'permission-denied') {
         setStatus(t('notifications.testPermissionDenied'));
       } else if (result.status === 'unsupported') {
@@ -195,6 +215,8 @@ export default function NotificationsScreen() {
 
   if (loading) return <LoadingState label={t('notifications.loading')} />;
   if (error && !preferences) return <ErrorState message={error} onRetry={() => { setLoading(true); void refresh(); }} />;
+
+  const preferencesDirty = Boolean(preferences && JSON.stringify(preferences) !== savedPreferencesSignature);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -278,24 +300,71 @@ export default function NotificationsScreen() {
             </View>
           ) : preferences ? (
             <View style={styles.section}>
-              <Text style={styles.description}>{t('notifications.settingsDescription')}</Text>
+              <View style={styles.preferenceIntro}>
+                <Text style={[styles.description, styles.preferenceIntroText]}>{t('notifications.settingsDescription')}</Text>
+                {preferencesDirty ? <Text style={styles.unsavedBadge}>{t('notifications.unsaved')}</Text> : null}
+              </View>
+              <View style={styles.deviceStatus}>
+                <View style={styles.deviceStatusIcon}>
+                  <Ionicons
+                    name={localStatus?.permission === 'granted' ? 'checkmark-circle-outline' : 'notifications-off-outline'}
+                    size={23}
+                    color={localStatus?.permission === 'granted' ? theme.colors.primary : theme.colors.warning}
+                  />
+                </View>
+                <View style={styles.deviceStatusText}>
+                  <Text style={styles.deviceStatusTitle}>{t(`notifications.deviceStatus.${localStatus?.permission || 'checking'}Title`)}</Text>
+                  <Text style={styles.deviceStatusDescription}>
+                    {localStatus?.permission === 'granted'
+                      ? t('notifications.deviceStatus.activeDescription', { count: localStatus.scheduledCount })
+                      : t(`notifications.deviceStatus.${localStatus?.permission || 'checking'}Description`)}
+                  </Text>
+                </View>
+                {localStatus?.permission === 'denied' ? (
+                  <Pressable accessibilityRole="button" onPress={() => void Linking.openSettings()} hitSlop={8}>
+                    <Text style={styles.settingsAction}>{t('notifications.openSettings')}</Text>
+                  </Pressable>
+                ) : null}
+              </View>
               <View style={styles.field}>
                 <Text style={styles.sectionTitle}>{t('notifications.timezone')}</Text>
                 <Text style={styles.fieldDescription}>{t('notifications.timezoneDescription')}</Text>
                 <TimezoneSelect value={preferences.timezone} onChange={(value) => updatePreference('timezone', value)} />
+                {preferences.timezone !== deviceTimeZone ? (
+                  <View style={styles.timezoneNotice}>
+                    <Ionicons name="information-circle-outline" size={17} color={theme.colors.warning} />
+                    <Text style={styles.timezoneNoticeText}>{t('notifications.timezoneMismatch', { timezone: deviceTimeZone })}</Text>
+                  </View>
+                ) : null}
               </View>
-              <Text style={styles.sectionTitle}>{t('notifications.quietHours')}</Text>
-              <Text style={styles.fieldDescription}>{t('notifications.quietHoursDescription')}</Text>
-              <View style={styles.quietRow}>
-                <View style={styles.quietField}>
-                  <Text style={styles.label}>{t('notifications.quietStart')}</Text>
-                  <TextInput accessibilityLabel={t('notifications.quietStart')} value={preferences.quietStart || ''} maxLength={5} placeholder={t('notifications.optional')} onChangeText={(value) => updatePreference('quietStart', value || null)} style={styles.input} />
+              <View style={styles.settingHeadingRow}>
+                <View style={styles.settingHeadingText}>
+                  <Text style={styles.sectionTitle}>{t('notifications.quietHours')}</Text>
+                  <Text style={styles.fieldDescription}>{t('notifications.quietHoursDescription')}</Text>
                 </View>
-                <View style={styles.quietField}>
-                  <Text style={styles.label}>{t('notifications.quietEnd')}</Text>
-                  <TextInput accessibilityLabel={t('notifications.quietEnd')} value={preferences.quietEnd || ''} maxLength={5} placeholder={t('notifications.optional')} onChangeText={(value) => updatePreference('quietEnd', value || null)} style={styles.input} />
-                </View>
+                <Switch
+                  accessibilityLabel={t('notifications.quietHours')}
+                  value={Boolean(preferences.quietStart && preferences.quietEnd)}
+                  onValueChange={(enabled) => {
+                    updatePreference('quietStart', enabled ? '22:00' : null);
+                    updatePreference('quietEnd', enabled ? '07:00' : null);
+                  }}
+                  trackColor={{ false: theme.colors.border, true: '#8ED8AE' }}
+                  thumbColor={preferences.quietStart && preferences.quietEnd ? theme.colors.primary : '#FFFFFF'}
+                />
               </View>
+              {preferences.quietStart && preferences.quietEnd ? (
+                <View style={styles.quietRow}>
+                  <View style={styles.quietField}>
+                    <Text style={styles.label}>{t('notifications.quietStart')}</Text>
+                    <TimeSelect value={preferences.quietStart} onChange={(value) => updatePreference('quietStart', value)} />
+                  </View>
+                  <View style={styles.quietField}>
+                    <Text style={styles.label}>{t('notifications.quietEnd')}</Text>
+                    <TimeSelect value={preferences.quietEnd} onChange={(value) => updatePreference('quietEnd', value)} />
+                  </View>
+                </View>
+              ) : null}
               <Text style={styles.sectionTitle}>{t('notifications.categoryTitle')}</Text>
               <View style={styles.preferenceList}>
                 {preferenceKeys.map((key) => (
@@ -640,11 +709,22 @@ const styles = StyleSheet.create({
   loadMoreButton: { minHeight: 46, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: theme.colors.primary, borderRadius: theme.radius.medium },
   loadMoreText: { color: theme.colors.primary, fontWeight: '800' },
   description: { color: theme.colors.textMuted, fontSize: 13, lineHeight: 19 },
+  preferenceIntro: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  preferenceIntroText: { flex: 1, minWidth: 0 },
+  unsavedBadge: { color: theme.colors.warning, backgroundColor: theme.colors.warningSurface, borderRadius: theme.radius.small, paddingHorizontal: 8, paddingVertical: 5, fontSize: 10, fontWeight: '800' },
+  deviceStatus: { minHeight: 76, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.medium, backgroundColor: theme.colors.surface, padding: 12 },
+  deviceStatusIcon: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: theme.radius.small, backgroundColor: theme.colors.surfaceMuted },
+  deviceStatusText: { flex: 1, minWidth: 0 },
+  deviceStatusTitle: { color: theme.colors.text, fontSize: 13, fontWeight: '800' },
+  deviceStatusDescription: { color: theme.colors.textMuted, fontSize: 11, lineHeight: 16, marginTop: 3 },
+  settingsAction: { color: theme.colors.primary, fontSize: 11, fontWeight: '800' },
   field: { gap: 7 },
   fieldDescription: { color: theme.colors.textMuted, fontSize: 12, lineHeight: 17, marginTop: -3 },
   label: { color: theme.colors.text, fontSize: 12, fontWeight: '800' },
   input: { minHeight: 48, borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.small, backgroundColor: theme.colors.surface, color: theme.colors.text, paddingHorizontal: 12, fontSize: 14 },
   sectionTitle: { color: theme.colors.text, fontSize: 15, fontWeight: '800' },
+  settingHeadingRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  settingHeadingText: { flex: 1, minWidth: 0, gap: 4 },
   quietRow: { flexDirection: 'row', gap: 10 },
   quietField: { flex: 1, gap: 7 },
   preferenceList: { borderTopWidth: 1, borderTopColor: theme.colors.border },
@@ -678,6 +758,8 @@ const styles = StyleSheet.create({
   timezoneText: { flex: 1, minWidth: 0 },
   timezoneLabel: { color: theme.colors.text, fontSize: 14, fontWeight: '800' },
   timezoneValue: { color: theme.colors.textMuted, fontSize: 11, lineHeight: 15, marginTop: 3 },
+  timezoneNotice: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, backgroundColor: theme.colors.warningSurface, borderRadius: theme.radius.small, padding: 9 },
+  timezoneNoticeText: { flex: 1, color: theme.colors.warning, fontSize: 11, lineHeight: 16 },
   modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(21, 35, 27, 0.38)' },
   timezoneModal: { height: '84%', backgroundColor: theme.colors.background, borderTopLeftRadius: theme.radius.medium, borderTopRightRadius: theme.radius.medium, paddingTop: 6 },
   modalHeader: { minHeight: 66, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingHorizontal: theme.spacing.lg },

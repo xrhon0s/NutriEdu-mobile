@@ -76,6 +76,9 @@ Implementado:
 - bandeja de notificaciones con paginacion, no leidas, marcar una o todas y navegacion interna segura;
 - preferencias de notificacion por categoria, selector buscable de zona horaria IANA, horas silenciosas y horarios de comidas, plan y compras;
 - recordatorios locales diarios y semanales con permiso explicito, reprogramacion, horas silenciosas y navegacion al tocar el aviso;
+- diagnostico por dispositivo con permiso, cantidad programada, enlace a ajustes y aviso cuando la zona de la cuenta difiere de la zona local;
+- cancelacion de recordatorios NutriEdu al cerrar o expirar la sesion para evitar avisos heredados entre cuentas;
+- selectores visuales para horas silenciosas, sin entrada manual en formato `HH:MM`;
 - eventos internos de bienvenida y actualizacion del plan sin push ni costo externo;
 - extraccion de desarrollo para probar el flujo medico sin IA ni costo;
 - invalidacion visual de scores y alertas mientras existan correcciones pendientes;

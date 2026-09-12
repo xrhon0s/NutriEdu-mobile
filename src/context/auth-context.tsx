@@ -1,5 +1,6 @@
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useState } from 'react';
 import { apiRequest, setUnauthorizedHandler } from '@/services/api';
+import { cancelLocalReminders } from '@/services/local-notifications';
 import { storage } from '@/services/storage';
 
 const TOKEN_KEY = 'nutriedu_token';
@@ -36,7 +37,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [notice, setNotice] = useState('');
 
   const clearSession = useCallback(async () => {
-    await Promise.allSettled([storage.remove(TOKEN_KEY), storage.remove(USER_KEY)]);
+    await Promise.allSettled([
+      storage.remove(TOKEN_KEY),
+      storage.remove(USER_KEY),
+      cancelLocalReminders(),
+    ]);
     setToken(null);
     setUser(null);
   }, []);

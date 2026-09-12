@@ -1,6 +1,13 @@
 import { Platform } from 'react-native';
 import type { NotificationResponse } from 'expo-notifications';
+import {
+  isQuietTime,
+  parseReminderTime,
+  resolveNotificationPermission,
+} from '@/services/notification-scheduling';
 import { NotificationPreferences } from '@/types/api';
+
+export { isQuietTime, resolveNotificationPermission } from '@/services/notification-scheduling';
 
 const CHANNEL_ID = 'nutriedu-reminders-v2';
 const LOCAL_REMINDER_SOURCE = 'nutriedu-local-reminder';
@@ -19,6 +26,11 @@ export type LocalNotificationTestResult = {
   scheduledCount: number;
 };
 
+export type LocalNotificationStatus = {
+  permission: 'granted' | 'denied' | 'undetermined' | 'unsupported' | 'error';
+  scheduledCount: number;
+};
+
 type NotificationsModule = typeof import('expo-notifications');
 
 type ReminderDefinition = {
@@ -30,10 +42,36 @@ type ReminderDefinition = {
   weekday?: number;
 };
 
-const permissionIsGranted = (permission: unknown) => {
-  if (!permission || typeof permission !== 'object') return false;
-  const response = permission as { granted?: boolean; status?: string };
-  return response.granted === true || response.status === 'granted';
+const isOwnedReminder = ({ content }: { content: { data?: Record<string, unknown> } }) => (
+  content.data?.source === LOCAL_REMINDER_SOURCE
+);
+
+export const inspectLocalNotifications = async (): Promise<LocalNotificationStatus> => {
+  if (Platform.OS === 'web') return { permission: 'unsupported', scheduledCount: 0 };
+  try {
+    const Notifications = await import('expo-notifications');
+    const [permission, scheduled] = await Promise.all([
+      Notifications.getPermissionsAsync(),
+      Notifications.getAllScheduledNotificationsAsync(),
+    ]);
+    return {
+      permission: resolveNotificationPermission(permission),
+      scheduledCount: scheduled.filter(isOwnedReminder).length,
+    };
+  } catch {
+    return { permission: 'error', scheduledCount: 0 };
+  }
+};
+
+export const cancelLocalReminders = async () => {
+  if (Platform.OS === 'web') return;
+  const Notifications = await import('expo-notifications');
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  await Promise.all(
+    scheduled.filter(isOwnedReminder).map(({ identifier }) => (
+      Notifications.cancelScheduledNotificationAsync(identifier)
+    )),
+  );
 };
 
 const reminderCopy = {
@@ -96,9 +134,7 @@ export const synchronizeLocalReminders = async (
   const Notifications = await import('expo-notifications');
 
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-  const owned = scheduled.filter(
-    ({ content }) => content.data?.source === LOCAL_REMINDER_SOURCE,
-  );
+  const owned = scheduled.filter(isOwnedReminder);
   await Promise.all(
     owned.map(({ identifier }) => Notifications.cancelScheduledNotificationAsync(identifier)),
   );
@@ -120,7 +156,7 @@ export const synchronizeLocalReminders = async (
       continue;
     }
 
-    const { hour, minute } = parseTime(reminder.time);
+    const { hour, minute } = parseReminderTime(reminder.time);
     const trigger = reminder.weekday === undefined
       ? {
           type: Notifications.SchedulableTriggerInputTypes.DAILY,
@@ -184,10 +220,9 @@ export const scheduleLocalNotificationTest = async (
     },
   });
 
-  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   return {
     status: 'scheduled',
-    scheduledCount: scheduled.filter(({ content }) => content.data?.source === LOCAL_REMINDER_SOURCE).length,
+    scheduledCount: 1,
   };
 };
 
@@ -205,12 +240,12 @@ const prepareLocalNotifications = async (Notifications: NotificationsModule) => 
   }
 
   let permission = await Notifications.getPermissionsAsync();
-  if (!permissionIsGranted(permission)) {
+  if (resolveNotificationPermission(permission) !== 'granted') {
     permission = await Notifications.requestPermissionsAsync({
       ios: { allowAlert: true, allowBadge: false, allowSound: false },
     });
   }
-  return permissionIsGranted(permission);
+  return resolveNotificationPermission(permission) === 'granted';
 };
 
 const buildReminderDefinitions = (
@@ -253,23 +288,4 @@ const buildReminderDefinitions = (
   }
 
   return reminders;
-};
-
-const parseTime = (value: string) => {
-  const [hour, minute] = value.split(':').map(Number);
-  return { hour, minute };
-};
-
-export const isQuietTime = (time: string, start: string | null, end: string | null) => {
-  if (!start || !end || start === end) return false;
-  const toMinutes = (value: string) => {
-    const { hour, minute } = parseTime(value);
-    return hour * 60 + minute;
-  };
-  const target = toMinutes(time);
-  const quietStart = toMinutes(start);
-  const quietEnd = toMinutes(end);
-  return quietStart < quietEnd
-    ? target >= quietStart && target < quietEnd
-    : target >= quietStart || target < quietEnd;
 };
