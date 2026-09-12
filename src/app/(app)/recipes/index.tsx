@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { ActivityIndicator, FlatList, Platform, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -18,11 +19,14 @@ import { apiRequest } from '@/services/api';
 import { Recipe, RecipeSearchResponse, RecommendationProfileContext } from '@/types/api';
 
 const PAGE_SIZE = 12;
+type RecipeView = 'recommended' | 'favorites';
 
 export default function RecipesScreen() {
   const { token, user } = useAuth();
   const { t } = useTranslation();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [view, setView] = useState<RecipeView>('recommended');
+  const [favoriteBusyIds, setFavoriteBusyIds] = useState<Set<number>>(() => new Set());
   const [filters, setFilters] = useState<RecipeFilters>(emptyRecipeFilters);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
@@ -38,7 +42,9 @@ export default function RecipesScreen() {
     options: { offset?: number; append?: boolean; signal?: AbortSignal } = {},
   ) => {
     const { offset = 0, append = false, signal } = options;
-    const validationError = validateRecipeFilters(currentFilters, t('recipes.filters.invalidCalories'));
+    const validationError = view === 'recommended'
+      ? validateRecipeFilters(currentFilters, t('recipes.filters.invalidCalories'))
+      : '';
     if (validationError) {
       setLoading(false);
       setSearching(false);
@@ -53,7 +59,7 @@ export default function RecipesScreen() {
       setError('');
       if (append) setLoadingMore(true);
       else setSearching(true);
-      const result = await apiRequest<RecipeSearchResponse>(buildRecipesPath(user?.id, currentFilters, offset), { token, signal });
+      const result = await apiRequest<RecipeSearchResponse>(buildRecipesPath(user?.id, currentFilters, offset, view), { token, signal });
       if (requestId !== requestSequence.current) return;
       setRecipes((current) => append ? mergeRecipes(current, result.recipes) : result.recipes);
       setNextOffset(result.pagination.nextOffset);
@@ -71,7 +77,7 @@ export default function RecipesScreen() {
         setLoadingMore(false);
       }
     }
-  }, [t, token, user]);
+  }, [t, token, user, view]);
 
   useEffect(() => {
     requestSequence.current += 1;
@@ -93,6 +99,29 @@ export default function RecipesScreen() {
     search(filters, { offset: nextOffset, append: true });
   };
 
+  const toggleFavorite = async (recipe: Recipe) => {
+    if (favoriteBusyIds.has(recipe.id)) return;
+    const nextFavorite = !recipe.isFavorite;
+    setFavoriteBusyIds((current) => new Set(current).add(recipe.id));
+    setRecipes((current) => current.map((item) => item.id === recipe.id ? { ...item, isFavorite: nextFavorite } : item));
+    try {
+      await apiRequest(`/recipes/favorites/${recipe.id}`, {
+        method: nextFavorite ? 'PUT' : 'DELETE',
+        token,
+      });
+      if (view === 'favorites' && !nextFavorite) await search(filters);
+    } catch (requestError) {
+      setRecipes((current) => current.map((item) => item.id === recipe.id ? { ...item, isFavorite: !nextFavorite } : item));
+      setError(requestError instanceof Error ? requestError.message : t('recipes.favoriteError'));
+    } finally {
+      setFavoriteBusyIds((current) => {
+        const next = new Set(current);
+        next.delete(recipe.id);
+        return next;
+      });
+    }
+  };
+
   if (loading) return <LoadingState label={t('recipes.loading')} />;
   if (error && recipes.length === 0) {
     return <ErrorState message={error} onRetry={() => { setLoading(true); void search(filters); }} />;
@@ -109,17 +138,36 @@ export default function RecipesScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={theme.colors.primary} />}
         ListHeaderComponent={(
           <View style={styles.header}>
-            <View>
-              <Text style={styles.title}>{countActiveRecipeFilters(filters) === 0 ? t('recipes.recommendedTitle') : t('recipes.exploreTitle')}</Text>
-              <Text style={styles.subtitle}>{countActiveRecipeFilters(filters) === 0 ? t('recipes.recommendedSubtitle') : t('recipes.exploreSubtitle')}</Text>
+            <View accessibilityRole="tablist" style={styles.viewTabs}>
+              {(['recommended', 'favorites'] as RecipeView[]).map((item) => (
+                <Pressable
+                  key={item}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: view === item }}
+                  onPress={() => {
+                    if (item === view) return;
+                    setRecipes([]);
+                    setNextOffset(null);
+                    setSearching(true);
+                    setView(item);
+                  }}
+                  style={[styles.viewTab, view === item && styles.selectedViewTab]}>
+                  <Ionicons name={item === 'recommended' ? 'sparkles-outline' : 'heart-outline'} size={17} color={view === item ? theme.colors.primary : theme.colors.textMuted} />
+                  <Text style={[styles.viewTabText, view === item && styles.selectedViewTabText]}>{t(`recipes.${item}Tab`)}</Text>
+                </Pressable>
+              ))}
             </View>
-            {countActiveRecipeFilters(filters) === 0 && recommendationContext?.clinicalReviewRequired ? (
+            <View>
+              <Text style={styles.title}>{view === 'favorites' ? t('recipes.savedTitle') : countActiveRecipeFilters(filters) === 0 ? t('recipes.recommendedTitle') : t('recipes.exploreTitle')}</Text>
+              <Text style={styles.subtitle}>{view === 'favorites' ? t('recipes.savedSubtitle') : countActiveRecipeFilters(filters) === 0 ? t('recipes.recommendedSubtitle') : t('recipes.exploreSubtitle')}</Text>
+            </View>
+            {view === 'recommended' && countActiveRecipeFilters(filters) === 0 && recommendationContext?.clinicalReviewRequired ? (
               <Text style={styles.warning}>{t('recipes.clinicalReview')}</Text>
             ) : null}
-            {countActiveRecipeFilters(filters) === 0 && recommendationContext?.missingFactors?.includes('profile') ? (
+            {view === 'recommended' && countActiveRecipeFilters(filters) === 0 && recommendationContext?.missingFactors?.includes('profile') ? (
               <Text style={styles.notice}>{t('recipes.incompleteProfile')}</Text>
             ) : null}
-            <RecipeFilterControls value={filters} onChange={setFilters} />
+            {view === 'recommended' ? <RecipeFilterControls value={filters} onChange={setFilters} /> : null}
             <View style={styles.resultRow}>
               <Text style={styles.resultCount}>{t('recipes.loaded', { count: recipes.length })}</Text>
               {searching ? <ActivityIndicator size="small" color={theme.colors.primary} /> : null}
@@ -128,9 +176,14 @@ export default function RecipesScreen() {
           </View>
         )}
         renderItem={({ item }) => (
-          <RecipeCard recipe={item} onPress={() => router.push({ pathname: '/(app)/recipes/[id]', params: { id: item.id } })} />
+          <RecipeCard
+            recipe={item}
+            favoriteBusy={favoriteBusyIds.has(item.id)}
+            onToggleFavorite={() => void toggleFavorite(item)}
+            onPress={() => router.push({ pathname: '/(app)/recipes/[id]', params: { id: item.id } })}
+          />
         )}
-        ListEmptyComponent={!searching ? <Text style={styles.empty}>{t('recipes.empty')}</Text> : null}
+        ListEmptyComponent={!searching ? <Text style={styles.empty}>{t(view === 'favorites' ? 'recipes.savedEmpty' : 'recipes.empty')}</Text> : null}
         ListFooterComponent={nextOffset !== null ? (
           <Pressable
             accessibilityRole="button"
@@ -146,7 +199,8 @@ export default function RecipesScreen() {
   );
 }
 
-const buildRecipesPath = (userId: number | undefined, filters: RecipeFilters, offset: number) => {
+const buildRecipesPath = (userId: number | undefined, filters: RecipeFilters, offset: number, view: RecipeView) => {
+  if (view === 'favorites') return `/recipes/favorites?limit=${PAGE_SIZE}&offset=${offset}`;
   if (countActiveRecipeFilters(filters) === 0) {
     return `/recipes/recommendations?limit=${PAGE_SIZE}&offset=${offset}`;
   }
@@ -167,6 +221,11 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: theme.colors.background },
   content: { padding: theme.spacing.lg, gap: theme.spacing.md, paddingBottom: 40 },
   header: { gap: theme.spacing.md },
+  viewTabs: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: theme.colors.border },
+  viewTab: { flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  selectedViewTab: { borderBottomColor: theme.colors.primary },
+  viewTabText: { color: theme.colors.textMuted, fontSize: 13, fontWeight: '700' },
+  selectedViewTabText: { color: theme.colors.primary },
   title: { color: theme.colors.text, fontSize: 25, fontWeight: '800' },
   subtitle: { color: theme.colors.textMuted, fontSize: 15, lineHeight: 21, marginTop: theme.spacing.xs },
   resultRow: { minHeight: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

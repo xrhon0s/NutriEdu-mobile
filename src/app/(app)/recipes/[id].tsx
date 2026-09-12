@@ -26,6 +26,8 @@ export default function RecipeDetailScreen() {
   const [evaluation, setEvaluation] = useState<RecipeEvaluation | null>(null);
   const [substitutes, setSubstitutes] = useState<IngredientSubstitution[]>([]);
   const [showAlternatives, setShowAlternatives] = useState(false);
+  const [favoriteBusy, setFavoriteBusy] = useState(false);
+  const [favoriteError, setFavoriteError] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [retryKey, setRetryKey] = useState(0);
@@ -68,13 +70,46 @@ export default function RecipeDetailScreen() {
   }
 
   const status = getStatusContent(evaluation.status, t);
+  const toggleFavorite = async () => {
+    if (favoriteBusy) return;
+    const nextFavorite = !recipe.isFavorite;
+    setFavoriteBusy(true);
+    setFavoriteError('');
+    setRecipe({ ...recipe, isFavorite: nextFavorite });
+    try {
+      await apiRequest(`/recipes/favorites/${recipe.id}`, {
+        method: nextFavorite ? 'PUT' : 'DELETE',
+        token,
+      });
+    } catch (requestError) {
+      setRecipe((current) => current ? { ...current, isFavorite: !nextFavorite } : current);
+      setFavoriteError(requestError instanceof Error ? requestError.message : t('recipes.favoriteError'));
+    } finally {
+      setFavoriteBusy(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
         <View>
-          <Text style={styles.eyebrow}>{t('recipes.detail.eyebrow')}</Text>
-          <Text style={styles.title}>{recipe.nombre}</Text>
+          <View style={styles.titleRow}>
+            <View style={styles.titleCopy}>
+              <Text style={styles.eyebrow}>{t('recipes.detail.eyebrow')}</Text>
+              <Text style={styles.title}>{recipe.nombre}</Text>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t(recipe.isFavorite ? 'recipes.card.removeSaved' : 'recipes.card.save')}
+              accessibilityState={{ selected: Boolean(recipe.isFavorite), disabled: favoriteBusy }}
+              disabled={favoriteBusy}
+              onPress={() => void toggleFavorite()}
+              style={({ pressed }) => [styles.favoriteButton, favoriteBusy && styles.disabled, pressed && styles.pressed]}>
+              <Ionicons name={recipe.isFavorite ? 'heart' : 'heart-outline'} size={23} color={recipe.isFavorite ? theme.colors.danger : theme.colors.textMuted} />
+            </Pressable>
+          </View>
           <Text style={styles.description}>{recipe.descripcion || t('recipes.card.noDescription')}</Text>
+          {favoriteError ? <Text style={styles.favoriteError}>{favoriteError}</Text> : null}
         </View>
 
         <View style={[styles.scorePanel, { backgroundColor: status.background }]}>
@@ -188,6 +223,10 @@ const getStatusContent = (status: RecipeEvaluation['status'], t: (key: string) =
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: theme.colors.background },
   content: { padding: theme.spacing.lg, gap: theme.spacing.lg, paddingBottom: 44 },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  titleCopy: { flex: 1, minWidth: 0 },
+  favoriteButton: { width: 46, height: 46, flexShrink: 0, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.medium, backgroundColor: theme.colors.surface },
+  favoriteError: { color: theme.colors.danger, backgroundColor: theme.colors.dangerSurface, borderRadius: theme.radius.small, padding: 10, marginTop: 10 },
   eyebrow: { color: theme.colors.primary, fontSize: 12, fontWeight: '800' },
   title: { color: theme.colors.text, fontSize: 27, fontWeight: '800', marginTop: theme.spacing.xs },
   description: { color: theme.colors.textMuted, fontSize: 15, lineHeight: 22, marginTop: theme.spacing.sm },
@@ -222,4 +261,5 @@ const styles = StyleSheet.create({
   notice: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderRadius: theme.radius.medium, backgroundColor: theme.colors.warningSurface, padding: theme.spacing.md },
   noticeText: { flex: 1, color: theme.colors.warning, lineHeight: 20 },
   pressed: { opacity: 0.75 },
+  disabled: { opacity: 0.5 },
 });

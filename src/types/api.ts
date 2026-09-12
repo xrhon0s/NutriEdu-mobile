@@ -10,6 +10,8 @@ export type Recipe = {
   fat_g?: string | null;
   fiber_g?: string | null;
   sodium_mg?: string | null;
+  isFavorite?: boolean;
+  favoritedAt?: string;
   hasUnsafeIngredients?: boolean;
   recommendation?: RecipeRecommendation;
 };

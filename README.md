@@ -29,6 +29,8 @@ Implementado:
 - detalle de receta con alertas y alternativas seguras limitadas a la misma funcion culinaria;
 - exploracion de recetas por nombre o descripcion, nivel de salud y rango de calorias;
 - paginacion de recetas en bloques de 12 con carga incremental, refresco y proteccion contra respuestas obsoletas;
+- recetas guardadas sincronizadas por cuenta, con listado paginado y accion optimista desde tarjeta o detalle;
+- aviso cuando una receta guardada deja de ser compatible con el perfil actual;
 - filtros reutilizados en el selector de recetas del planificador;
 - base i18n con recursos estructurados y espanol como unico idioma habilitado en esta version;
 - captura y revision completa del analisis visual disponibles en recursos espanol/ingles;
