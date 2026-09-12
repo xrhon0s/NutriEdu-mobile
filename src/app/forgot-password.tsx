@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { AuthScreen, FormField, FormMessage, PrimaryButton, TextLink } from '@/components/auth-form';
 import { apiRequest } from '@/services/api';
 
-type ForgotResponse = { message: string };
-
 export default function ForgotPasswordScreen() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -13,32 +13,32 @@ export default function ForgotPasswordScreen() {
 
   const handleRequest = async () => {
     if (!email.trim()) {
-      setError('Ingresa tu correo electronico');
+      setError(t('auth.errors.emailRequired'));
       return;
     }
 
     try {
       setSubmitting(true);
       setError('');
-      const response = await apiRequest<ForgotResponse>('/users/forgot-password', {
+      await apiRequest('/users/forgot-password', {
         method: 'POST',
         body: JSON.stringify({ email: email.trim().toLowerCase() }),
       });
-      setSuccess(response.message);
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'No pudimos enviar la solicitud');
+      setSuccess(t('auth.forgot.success'));
+    } catch {
+      setError(t('auth.errors.resetRequestFailed'));
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <AuthScreen title="Recuperar acceso" subtitle="Te enviaremos instrucciones si el correo esta registrado.">
+    <AuthScreen title={t('auth.forgot.title')} subtitle={t('auth.forgot.subtitle')}>
       {error ? <FormMessage type="error">{error}</FormMessage> : null}
       {success ? <FormMessage type="success">{success}</FormMessage> : null}
-      <FormField label="Correo electronico" value={email} onChangeText={setEmail} autoComplete="email" keyboardType="email-address" placeholder="nombre@correo.com" onSubmitEditing={handleRequest} />
-      <PrimaryButton label="Enviar instrucciones" loadingLabel="Enviando..." loading={submitting} onPress={handleRequest} />
-      <TextLink label="Volver a iniciar sesion" onPress={() => router.replace('/login')} />
+      <FormField label={t('auth.email')} value={email} onChangeText={setEmail} autoComplete="email" keyboardType="email-address" placeholder={t('auth.emailPlaceholder')} onSubmitEditing={handleRequest} />
+      <PrimaryButton label={t('auth.forgot.submit')} loadingLabel={t('auth.forgot.submitting')} loading={submitting} onPress={handleRequest} />
+      <TextLink label={t('auth.forgot.backToLogin')} onPress={() => router.replace('/login')} />
     </AuthScreen>
   );
 }

@@ -60,7 +60,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     setUnauthorizedHandler(() => {
-      setNotice('Tu sesion expiro. Inicia sesion nuevamente.');
+      setNotice('sessionExpired');
       void clearSession();
     });
     return () => setUnauthorizedHandler(null);

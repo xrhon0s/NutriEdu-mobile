@@ -7,8 +7,8 @@ Aplicacion movil de NutriEdu para Android e iOS. Usa React Native, Expo SDK 57, 
 Implementado:
 
 - login contra `POST /api/users/login`;
-- registro con inicio de sesion automatico;
-- solicitud de recuperacion de contrasena;
+- registro con inicio de sesion automatico y politica visible de contrasena fuerte, alineada con el backend;
+- solicitud de recuperacion de contrasena con respuesta neutral para no revelar cuentas existentes;
 - restauracion de sesion al iniciar la app;
 - JWT almacenado con Expo SecureStore en Android e iOS;
 - rutas publicas y protegidas con Expo Router;
@@ -33,6 +33,7 @@ Implementado:
 - aviso cuando una receta guardada deja de ser compatible con el perfil actual;
 - filtros reutilizados en el selector de recetas del planificador;
 - base i18n con recursos estructurados y espanol como unico idioma habilitado en esta version;
+- autenticacion mobile completamente migrada a recursos espanol/ingles, incluidos errores conocidos y etiquetas accesibles;
 - captura y revision completa del analisis visual disponibles en recursos espanol/ingles;
 - recursos ingleses de navegacion, recetas y notificaciones conservados solo como trabajo de desarrollo, sin selector publico hasta completar UI, catalogos y mensajes del backend;
 - plan semanal editable con busqueda de recetas compatibles;
@@ -92,7 +93,7 @@ Siguiente bloque:
 - cerrar un recorrido de aceptacion fisica completo en iPhone y Android: registro, perfil, recetas, plan, compras, analisis, privacidad y recuperacion;
 - ampliar las pruebas automatizadas iniciales hacia componentes y recorridos end-to-end;
 - continuar la jerarquia visual compartida en Analizar, Plan y Notificaciones, tomando Perfil como referencia;
-- completar i18n: aun existe copy directo en autenticacion, perfil, documentos medicos y algunos componentes de revision;
+- completar i18n: aun existe copy directo en perfil, documentos medicos y algunos componentes secundarios;
 - completar nutrientes y porciones auditables del catalogo de recetas para elevar la confianza del ranking y las cantidades de compras;
 - sustituir la extraccion de desarrollo de documentos medicos por OCR/IA real con revision humana;
 - validar recordatorios locales en builds nativos y desarrollar push remoto solo despues de esa aceptacion;
@@ -294,6 +295,7 @@ src/
 ## Seguridad
 
 - La app nunca guarda la contrasena.
+- Registro valida localmente la misma politica autoritativa del backend: minimo 10 caracteres, maximo 72 bytes, mayuscula, minuscula, numero y simbolo.
 - En Android e iOS, el JWT se almacena mediante Expo SecureStore.
 - El backend obtiene la identidad desde el JWT y no confia en IDs enviados por la app.
 - El backend rechaza recetas inexistentes o incompatibles con las restricciones al guardar el plan.

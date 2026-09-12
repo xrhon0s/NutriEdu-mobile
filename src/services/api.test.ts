@@ -14,8 +14,8 @@ describe('apiRequest', () => {
   });
 
   it('preserves API messages and status codes', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ message: 'Solicitud invalida' }), { status: 400 })));
-    await expect(apiRequest('/invalid')).rejects.toMatchObject({ message: 'Solicitud invalida', status: 400 });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: 'INVALID_INPUT', message: 'Solicitud invalida' }), { status: 400 })));
+    await expect(apiRequest('/invalid')).rejects.toMatchObject({ code: 'INVALID_INPUT', message: 'Solicitud invalida', status: 400 });
   });
 
   it('converts connectivity failures into a user-facing error', async () => {

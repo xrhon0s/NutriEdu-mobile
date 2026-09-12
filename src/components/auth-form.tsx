@@ -13,9 +13,12 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { theme } from '@/constants/nutriedu-theme';
+import { passwordChecks } from '@/services/password-policy';
 
 export function AuthScreen({ title, subtitle, children }: PropsWithChildren<{ title: string; subtitle: string }>) {
+  const { t } = useTranslation();
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -24,7 +27,7 @@ export function AuthScreen({ title, subtitle, children }: PropsWithChildren<{ ti
             <Image source={require('@/assets/images/nutriedu-logo.png')} style={styles.logo} resizeMode="contain" />
             <View>
               <Text style={styles.brandName}>NutriEdu</Text>
-              <Text style={styles.brandSubtitle}>Nutricion personalizada</Text>
+              <Text style={styles.brandSubtitle}>{t('auth.brandSubtitle')}</Text>
             </View>
           </View>
           <View style={styles.form}>
@@ -42,6 +45,7 @@ export function AuthScreen({ title, subtitle, children }: PropsWithChildren<{ ti
 
 export function FormField({ label, secureTextEntry, ...props }: TextInputProps & { label: string }) {
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const { t } = useTranslation();
   return (
     <View style={styles.fieldGroup}>
       <Text style={styles.label}>{label}</Text>
@@ -50,7 +54,7 @@ export function FormField({ label, secureTextEntry, ...props }: TextInputProps &
         {secureTextEntry ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={passwordVisible ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+            accessibilityLabel={passwordVisible ? t('auth.hidePassword') : t('auth.showPassword')}
             onPress={() => setPasswordVisible((current) => !current)}
             hitSlop={8}
             style={styles.passwordToggle}>
@@ -58,6 +62,30 @@ export function FormField({ label, secureTextEntry, ...props }: TextInputProps &
           </Pressable>
         ) : null}
       </View>
+    </View>
+  );
+}
+
+export function PasswordRequirements({ password }: { password: string }) {
+  const { t } = useTranslation();
+  const checks = passwordChecks(password);
+  const requirements = [
+    ['minLength', checks.minLength],
+    ['uppercase', checks.uppercase],
+    ['lowercase', checks.lowercase],
+    ['number', checks.number],
+    ['symbol', checks.symbol],
+    ['maxBytes', checks.maxBytes],
+  ] as const;
+
+  return (
+    <View style={styles.requirements} accessibilityRole="list">
+      {requirements.map(([key, met]) => (
+        <View key={key} style={styles.requirementRow} accessibilityRole="text">
+          <Ionicons name={met ? 'checkmark-circle' : 'ellipse-outline'} size={17} color={met ? theme.colors.primary : theme.colors.textMuted} />
+          <Text style={[styles.requirementText, met && styles.requirementMet]}>{t(`auth.passwordRequirements.${key}`)}</Text>
+        </View>
+      ))}
     </View>
   );
 }
@@ -110,6 +138,10 @@ const styles = StyleSheet.create({
   inputShell: { minHeight: 50, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.medium, backgroundColor: theme.colors.surface },
   input: { minHeight: 48, flex: 1, color: theme.colors.text, paddingHorizontal: 14, fontSize: 16 },
   passwordToggle: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
+  requirements: { gap: 7, marginTop: -4 },
+  requirementRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  requirementText: { flex: 1, color: theme.colors.textMuted, fontSize: 13, lineHeight: 18 },
+  requirementMet: { color: theme.colors.primaryPressed },
   button: { minHeight: 50, alignItems: 'center', justifyContent: 'center', borderRadius: theme.radius.medium, backgroundColor: theme.colors.primary },
   buttonPressed: { backgroundColor: theme.colors.primaryPressed },
   buttonDisabled: { opacity: 0.65 },
