@@ -60,6 +60,7 @@ export default function AuthenticatedLayout() {
       <Tabs.Screen name="medical-history" options={{ href: null, headerShown: false }} />
       <Tabs.Screen name="privacy-center" options={{ href: null, headerShown: false }} />
       <Tabs.Screen name="notifications" options={{ href: null, headerShown: false }} />
+      <Tabs.Screen name="progress" options={{ href: null, headerShown: false }} />
     </Tabs>
   );
 }

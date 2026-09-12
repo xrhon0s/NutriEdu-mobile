@@ -516,6 +516,7 @@ function PersonalView({ form, setForm, saving, onSave }: {
       <SaveButton label={t('profile.personal.save')} saving={saving} onPress={onSave} />
       <FormSection title={t('profile.personal.account')} description={t('profile.personal.accountDescription')}>
         <View style={styles.linkGroup}>
+          <ProfileLink icon="analytics-outline" title="Seguimiento de progreso" description="Peso, medidas, adherencia y energia" onPress={() => router.push('/progress')} />
           <ProfileLink icon="notifications-outline" title={t('profile.personal.notifications')} description={t('profile.personal.notificationsDescription')} onPress={() => router.push('/notifications')} />
           <ProfileLink icon="shield-checkmark-outline" title={t('profile.personal.privacy')} description={t('profile.personal.privacyDescription')} onPress={() => router.push('/privacy-center')} divider={false} />
         </View>

@@ -49,6 +49,31 @@ export type RecommendationProfileContext = {
 
 export type NotificationCategory = 'meals' | 'weekly_plan' | 'shopping' | 'progress' | 'security';
 
+export type ProgressEntry = {
+  id: number;
+  recorded_on: string;
+  weight_kg: string | number | null;
+  waist_cm: string | number | null;
+  body_fat_pct: string | number | null;
+  adherence_pct: string | number | null;
+  energy_level: number | null;
+  notes: string | null;
+  source: 'user' | 'professional' | 'import';
+};
+
+export type ProgressSummary = {
+  entries: number;
+  baseline: ProgressEntry | null;
+  latest: ProgressEntry | null;
+  change: { weightKg: number | null; waistCm: number | null; bodyFatPct: number | null } | null;
+};
+
+export type ProgressResponse = {
+  items: ProgressEntry[];
+  pagination: { limit: number; offset: number; total: number; hasMore: boolean };
+  summary: ProgressSummary;
+};
+
 export type InAppNotification = {
   id: number;
   category: NotificationCategory;
