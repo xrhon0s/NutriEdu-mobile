@@ -37,6 +37,8 @@ Implementado:
 - guardado atomico del plan y validacion de sus 21 espacios desde la API;
 - reevaluacion de recetas guardadas al cargar el plan, bloqueo de incompatibilidades y acceso a sus alternativas;
 - confirmacion antes de descartar cambios locales mediante actualizacion manual;
+- selector compacto de los siete dias con conteo de comidas y estado visible de cambios sincronizados o pendientes;
+- resumen nutricional semanal de calorias, proteina, carbohidratos y grasa con cobertura independiente por nutriente;
 - lista de compras detallada, agrupada por familia alimentaria y sincronizada con el plan;
 - cantidades agregadas en gramos o unidades, recetas de origen y aviso de datos incompletos;
 - progreso de compras persistente por usuario y firma del plan, con vistas de todos o pendientes;
@@ -46,7 +48,7 @@ Implementado:
 - cierre automatico de sesiones expiradas con aviso al volver a Login;
 - errores de conectividad uniformes y reintento en Perfil, Recetas, detalle, Plan, Compras, Notificaciones e Historial medico;
 - validacion central de claves antes de acceder a SecureStore;
-- primera suite Vitest para contrato HTTP, expiracion de sesion y claves seguras;
+- suite Vitest para contrato HTTP, expiracion de sesion, claves seguras y agregacion nutricional del plan;
 - formularios ajustables al teclado para mantener visibles las busquedas inferiores;
 - captura desde camara o galeria con permisos, vista previa y validacion de imagen;
 - flujo guiado Foto, Procesar y Revisar que concentra la pantalla en la fase actual;

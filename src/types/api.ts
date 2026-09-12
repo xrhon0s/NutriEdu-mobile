@@ -154,6 +154,13 @@ export type PlannedMeal = {
   receta_nombre: string;
   descripcion: string | null;
   calorias: string | number | null;
+  protein_g?: string | number | null;
+  carbs_g?: string | number | null;
+  fat_g?: string | number | null;
+  saturated_fat_g?: string | number | null;
+  sugar_g?: string | number | null;
+  fiber_g?: string | number | null;
+  sodium_mg?: string | number | null;
   tiempo_preparacion: number | null;
   nivel_salud: number;
   unsafeIngredients?: SafetyIngredient[];
