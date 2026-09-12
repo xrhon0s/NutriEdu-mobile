@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { theme } from '@/constants/nutriedu-theme';
 import { FoodAnalysisEvaluation, FoodVisionAnalysis } from '@/types/api';
 
@@ -15,18 +16,19 @@ type FoodAnalysisReviewProps = {
 
 type NutrientKey = Exclude<keyof FoodVisionAnalysis['nutrition'], 'confidence'>;
 
-const nutritionFields: { key: NutrientKey; label: string; unit: string; maximum: number }[] = [
-  { key: 'calories', label: 'Calorias', unit: 'kcal', maximum: 20000 },
-  { key: 'protein_g', label: 'Proteina', unit: 'g', maximum: 5000 },
-  { key: 'carbs_g', label: 'Carbohidratos', unit: 'g', maximum: 5000 },
-  { key: 'fat_g', label: 'Grasas', unit: 'g', maximum: 5000 },
-  { key: 'saturated_fat_g', label: 'Grasa saturada', unit: 'g', maximum: 5000 },
-  { key: 'sugar_g', label: 'Azucar', unit: 'g', maximum: 5000 },
-  { key: 'fiber_g', label: 'Fibra', unit: 'g', maximum: 5000 },
-  { key: 'sodium_mg', label: 'Sodio', unit: 'mg', maximum: 100000 },
+const nutritionFields: { key: NutrientKey; labelKey: string; unit: string; maximum: number }[] = [
+  { key: 'calories', labelKey: 'calories', unit: 'kcal', maximum: 20000 },
+  { key: 'protein_g', labelKey: 'protein', unit: 'g', maximum: 5000 },
+  { key: 'carbs_g', labelKey: 'carbs', unit: 'g', maximum: 5000 },
+  { key: 'fat_g', labelKey: 'fat', unit: 'g', maximum: 5000 },
+  { key: 'saturated_fat_g', labelKey: 'saturatedFat', unit: 'g', maximum: 5000 },
+  { key: 'sugar_g', labelKey: 'sugar', unit: 'g', maximum: 5000 },
+  { key: 'fiber_g', labelKey: 'fiber', unit: 'g', maximum: 5000 },
+  { key: 'sodium_mg', labelKey: 'sodium', unit: 'mg', maximum: 100000 },
 ];
 
 export function FoodAnalysisReview({ analysis, evaluation, dirty, reviewing, onChange, onReview }: FoodAnalysisReviewProps) {
+  const { t } = useTranslation();
   const [newIngredient, setNewIngredient] = useState('');
   const [portionGrams, setPortionGrams] = useState(() => numberInputValue(analysis.portion.estimatedGrams));
   const [nutritionDrafts, setNutritionDrafts] = useState(() => nutritionInputValues(analysis));
@@ -95,15 +97,15 @@ export function FoodAnalysisReview({ analysis, evaluation, dirty, reviewing, onC
     || analysis.ingredients.some((ingredient) => !ingredient.name.trim());
 
   const status = dirty
-    ? { label: 'Pendiente', color: theme.colors.warning, background: theme.colors.warningSurface }
-    : evaluationStatus[evaluation.status];
+    ? { label: t('analyze.review.status.pending'), color: theme.colors.warning, background: theme.colors.warningSurface }
+    : { ...evaluationStatus[evaluation.status], label: t(`analyze.review.status.${evaluation.status}`) };
 
   return (
     <View style={styles.container}>
       <View style={styles.resultHeader}>
         <View style={styles.resultHeaderText}>
-          <Text style={styles.eyebrow}>RESULTADO PARA REVISAR</Text>
-          <Text style={styles.dishName}>{analysis.dish.name || 'Plato no identificado'}</Text>
+          <Text style={styles.eyebrow}>{t('analyze.review.eyebrow')}</Text>
+          <Text style={styles.dishName}>{analysis.dish.name || t('analyze.review.unidentifiedDish')}</Text>
           <Text style={styles.description}>{analysis.dish.description}</Text>
         </View>
         <View style={[styles.statusBadge, { backgroundColor: status.background }]}>
@@ -114,17 +116,17 @@ export function FoodAnalysisReview({ analysis, evaluation, dirty, reviewing, onC
       {analysis.isFood ? (
         <>
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Ingredientes detectados</Text>
+            <Text style={styles.sectionTitle}>{t('analyze.review.detectedIngredients')}</Text>
             {analysis.ingredients.map((ingredient, index) => (
               <View key={`ingredient-${index}`} style={styles.ingredientRow}>
                 <TextInput
-                  accessibilityLabel={`Ingrediente ${index + 1}`}
+                  accessibilityLabel={t('analyze.review.ingredientNumber', { number: index + 1 })}
                   value={ingredient.name}
                   onChangeText={(name) => updateIngredient(index, name)}
                   style={styles.ingredientInput}
                 />
-                <Text style={styles.confidence}>{confidenceLabel[ingredient.confidence]}</Text>
-                <Pressable accessibilityRole="button" accessibilityLabel={`Quitar ${ingredient.name}`} hitSlop={8} onPress={() => removeIngredient(index)} style={styles.iconButton}>
+                <Text style={styles.confidence}>{t(`analyze.review.confidence.${ingredient.confidence}`)}</Text>
+                <Pressable accessibilityRole="button" accessibilityLabel={t('analyze.review.removeIngredient', { name: ingredient.name })} hitSlop={8} onPress={() => removeIngredient(index)} style={styles.iconButton}>
                   <Ionicons name="trash-outline" size={18} color={theme.colors.danger} />
                 </Pressable>
               </View>
@@ -133,57 +135,57 @@ export function FoodAnalysisReview({ analysis, evaluation, dirty, reviewing, onC
               <TextInput
                 value={newIngredient}
                 onChangeText={setNewIngredient}
-                placeholder="Agregar ingrediente"
+                placeholder={t('analyze.review.addIngredient')}
                 placeholderTextColor={theme.colors.textMuted}
                 returnKeyType="done"
                 onSubmitEditing={addIngredient}
                 style={styles.addInput}
               />
-              <Pressable accessibilityRole="button" accessibilityLabel="Agregar ingrediente" disabled={!newIngredient.trim()} onPress={addIngredient} style={styles.addButton}>
+              <Pressable accessibilityRole="button" accessibilityLabel={t('analyze.review.addIngredient')} disabled={!newIngredient.trim()} onPress={addIngredient} style={styles.addButton}>
                 <Ionicons name="add" size={20} color={theme.colors.primary} />
               </Pressable>
             </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Porcion revisada</Text>
+            <Text style={styles.sectionTitle}>{t('analyze.review.reviewedPortion')}</Text>
             <TextInput
-              accessibilityLabel="Descripcion de la porcion"
+              accessibilityLabel={t('analyze.review.portionDescription')}
               value={analysis.portion.description}
               onChangeText={(description) => onChange({
                 ...analysis,
                 portion: { ...analysis.portion, description },
               })}
               maxLength={200}
-              placeholder="Ej. Un plato mediano"
+              placeholder={t('analyze.review.portionExample')}
               placeholderTextColor={theme.colors.textMuted}
               style={styles.textField}
             />
             <View style={styles.numberFieldRow}>
               <TextInput
-                accessibilityLabel="Peso estimado de la porcion en gramos"
+                accessibilityLabel={t('analyze.review.portionWeight')}
                 value={portionGrams}
                 onChangeText={updatePortionGrams}
                 keyboardType="decimal-pad"
                 inputMode="decimal"
-                placeholder="Sin dato"
+                placeholder={t('analyze.review.noData')}
                 placeholderTextColor={theme.colors.textMuted}
                 style={styles.numberInput}
               />
               <Text style={styles.unit}>g</Text>
             </View>
-            {numberInputError(portionGrams, 10000) ? <Text style={styles.fieldError}>Usa un valor entre 0 y 10000 g.</Text> : null}
+            {numberInputError(portionGrams, 10000) ? <Text style={styles.fieldError}>{t('analyze.review.portionRange')}</Text> : null}
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Estimacion nutricional revisada</Text>
+            <Text style={styles.sectionTitle}>{t('analyze.review.reviewedNutrition')}</Text>
             <View style={styles.nutritionGrid}>
               {nutritionFields.map((field) => (
                 <View key={field.key} style={styles.nutritionItem}>
-                  <Text style={styles.nutritionLabel}>{field.label}</Text>
+                  <Text style={styles.nutritionLabel}>{t(`analyze.review.nutrients.${field.labelKey}`)}</Text>
                   <View style={styles.nutritionInputRow}>
                     <TextInput
-                      accessibilityLabel={`${field.label} en ${field.unit}`}
+                      accessibilityLabel={t('analyze.review.nutrientUnit', { nutrient: t(`analyze.review.nutrients.${field.labelKey}`), unit: field.unit })}
                       value={nutritionDrafts[field.key]}
                       onChangeText={(draft) => updateNutrition(field.key, draft)}
                       keyboardType="decimal-pad"
@@ -194,35 +196,35 @@ export function FoodAnalysisReview({ analysis, evaluation, dirty, reviewing, onC
                     />
                     <Text style={styles.nutritionUnit}>{field.unit}</Text>
                   </View>
-                  {numberInputError(nutritionDrafts[field.key], field.maximum) ? <Text style={styles.fieldError}>Valor fuera de rango</Text> : null}
+                  {numberInputError(nutritionDrafts[field.key], field.maximum) ? <Text style={styles.fieldError}>{t('analyze.review.outOfRange')}</Text> : null}
                 </View>
               ))}
             </View>
-            <Text style={styles.approximation}>Valores aproximados · Confianza {confidenceLabel[analysis.nutrition.confidence].toLowerCase()}</Text>
+            <Text style={styles.approximation}>{t('analyze.review.approximation', { confidence: t(`analyze.review.confidence.${analysis.nutrition.confidence}`).toLowerCase() })}</Text>
           </View>
 
           {analysis.uncertainties.length ? (
             <View style={styles.uncertaintySection}>
-              <Text style={styles.uncertaintyTitle}>Incertidumbres</Text>
+              <Text style={styles.uncertaintyTitle}>{t('analyze.review.uncertainties')}</Text>
               {analysis.uncertainties.map((item, index) => <Text key={`${index}-${item}`} style={styles.uncertaintyText}>• {item}</Text>)}
             </View>
           ) : null}
 
           <View style={styles.section}>
             <View style={styles.evaluationHeader}>
-              <Text style={styles.sectionTitle}>Evaluacion personalizada</Text>
+              <Text style={styles.sectionTitle}>{t('analyze.review.personalizedEvaluation')}</Text>
               {!dirty && evaluation.score !== null ? <Text style={styles.score}>{evaluation.score}/100</Text> : null}
             </View>
-            {dirty ? <Text style={styles.pendingMessage}>Reevalua las correcciones para actualizar el score y las alertas.</Text> : (
+            {dirty ? <Text style={styles.pendingMessage}>{t('analyze.review.reevaluateNotice')}</Text> : (
               <>
                 {evaluation.unsafeIngredients.map((ingredient) => (
-                  <Text key={`${ingredient.id}-${ingredient.nombre}`} style={styles.dangerMessage}>Revisar: {ingredient.nombre}</Text>
+                  <Text key={`${ingredient.id}-${ingredient.nombre}`} style={styles.dangerMessage}>{t('analyze.review.reviewIngredient', { name: ingredient.nombre })}</Text>
                 ))}
                 {evaluation.alerts.map((alert, index) => (
                   <Text key={`${alert.nutrient}-${index}`} style={styles.alertMessage}>{alert.message}</Text>
                 ))}
                 {!evaluation.unsafeIngredients.length && !evaluation.alerts.length ? (
-                  <Text style={styles.safeMessage}>No se detectaron conflictos con el perfil actual.</Text>
+                  <Text style={styles.safeMessage}>{t('analyze.review.noConflicts')}</Text>
                 ) : null}
               </>
             )}
@@ -234,23 +236,22 @@ export function FoodAnalysisReview({ analysis, evaluation, dirty, reviewing, onC
             onPress={onReview}
             style={({ pressed }) => [styles.reviewButton, reviewDisabled && styles.disabled, pressed && styles.pressed]}>
             <Ionicons name="shield-checkmark-outline" size={20} color="#FFFFFF" />
-            <Text style={styles.reviewButtonText}>{reviewing ? 'Reevaluando...' : 'Reevaluar correcciones'}</Text>
+            <Text style={styles.reviewButtonText}>{reviewing ? t('analyze.review.reevaluating') : t('analyze.review.reevaluate')}</Text>
           </Pressable>
         </>
       ) : (
-        <Text style={styles.notFood}>{analysis.notFoodReason || 'No se identifico comida en la imagen.'}</Text>
+        <Text style={styles.notFood}>{analysis.notFoodReason || t('analyze.review.notFood')}</Text>
       )}
     </View>
   );
 }
 
-const confidenceLabel = { low: 'Baja', medium: 'Media', high: 'Alta' } as const;
 const evaluationStatus = {
-  suitable: { label: 'Adecuado', color: theme.colors.primaryPressed, background: theme.colors.surfaceMuted },
-  suitable_with_adjustments: { label: 'Con ajustes', color: theme.colors.warning, background: theme.colors.warningSurface },
-  review_required: { label: 'Revisar', color: theme.colors.danger, background: theme.colors.dangerSurface },
-  not_suitable: { label: 'No adecuado', color: theme.colors.danger, background: theme.colors.dangerSurface },
-  not_food: { label: 'Sin comida', color: theme.colors.textMuted, background: theme.colors.surfaceMuted },
+  suitable: { color: theme.colors.primaryPressed, background: theme.colors.surfaceMuted },
+  suitable_with_adjustments: { color: theme.colors.warning, background: theme.colors.warningSurface },
+  review_required: { color: theme.colors.danger, background: theme.colors.dangerSurface },
+  not_suitable: { color: theme.colors.danger, background: theme.colors.dangerSurface },
+  not_food: { color: theme.colors.textMuted, background: theme.colors.surfaceMuted },
 };
 const numberInputValue = (value: number | null) => value == null ? '' : String(value);
 const nutritionInputValues = (analysis: FoodVisionAnalysis): Record<NutrientKey, string> => Object.fromEntries(

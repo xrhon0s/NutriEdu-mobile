@@ -31,6 +31,7 @@ Implementado:
 - paginacion de recetas en bloques de 12 con carga incremental, refresco y proteccion contra respuestas obsoletas;
 - filtros reutilizados en el selector de recetas del planificador;
 - base i18n con recursos estructurados y espanol como unico idioma habilitado en esta version;
+- captura y revision completa del analisis visual disponibles en recursos espanol/ingles;
 - recursos ingleses de navegacion, recetas y notificaciones conservados solo como trabajo de desarrollo, sin selector publico hasta completar UI, catalogos y mensajes del backend;
 - plan semanal editable con busqueda de recetas compatibles;
 - guardado atomico del plan y validacion de sus 21 espacios desde la API;
@@ -84,7 +85,7 @@ Siguiente bloque:
 - cerrar un recorrido de aceptacion fisica completo en iPhone y Android: registro, perfil, recetas, plan, compras, analisis, privacidad y recuperacion;
 - ampliar las pruebas automatizadas iniciales hacia componentes y recorridos end-to-end;
 - continuar la jerarquia visual compartida en Analizar, Plan y Notificaciones, tomando Perfil como referencia;
-- completar i18n: aun existe copy directo en autenticacion, perfil, analisis, documentos y componentes de revision;
+- completar i18n: aun existe copy directo en autenticacion, perfil, documentos medicos y algunos componentes de revision;
 - completar nutrientes y porciones auditables del catalogo de recetas para elevar la confianza del ranking y las cantidades de compras;
 - sustituir la extraccion de desarrollo de documentos medicos por OCR/IA real con revision humana;
 - validar recordatorios locales en builds nativos y desarrollar push remoto solo despues de esa aceptacion;

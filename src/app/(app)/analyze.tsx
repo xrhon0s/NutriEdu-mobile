@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
+import { useTranslation } from 'react-i18next';
 import { Image, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FoodAnalysisReview } from '@/components/food-analysis-review';
@@ -25,6 +26,7 @@ type PermissionIssue = { message: string } | null;
 
 export default function AnalyzeScreen() {
   const { token } = useAuth();
+  const { t } = useTranslation();
   const [asset, setAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [source, setSource] = useState<FoodImageSource | null>(null);
   const [permissionIssue, setPermissionIssue] = useState<PermissionIssue>(null);
@@ -44,11 +46,11 @@ export default function AnalyzeScreen() {
       setVisionStatus(await apiRequest<VisionProviderStatus>('/food-analysis/status', { token }));
       setError('');
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'No pudimos consultar el proveedor visual');
+      setError(requestError instanceof Error ? requestError.message : t('analyze.errors.provider'));
     } finally {
       setStatusLoading(false);
     }
-  }, [token]);
+  }, [t, token]);
 
   useEffect(() => {
     let active = true;
@@ -60,18 +62,18 @@ export default function AnalyzeScreen() {
         }
       })
       .catch((requestError) => {
-        if (active) setError(requestError instanceof Error ? requestError.message : 'No pudimos consultar el proveedor visual');
+        if (active) setError(requestError instanceof Error ? requestError.message : t('analyze.errors.provider'));
       })
       .finally(() => {
         if (active) setStatusLoading(false);
       });
     return () => { active = false; };
-  }, [token]);
+  }, [t, token]);
 
   const capturePhoto = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
-      setPermissionIssue({ message: 'El permiso de camara esta desactivado.' });
+      setPermissionIssue({ message: t('analyze.permissions.camera') });
       return;
     }
 
@@ -86,7 +88,7 @@ export default function AnalyzeScreen() {
   const selectPhoto = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      setPermissionIssue({ message: 'El permiso para acceder a fotos esta desactivado.' });
+      setPermissionIssue({ message: t('analyze.permissions.library') });
       return;
     }
 
@@ -98,7 +100,7 @@ export default function AnalyzeScreen() {
   };
 
   const chooseAsset = (nextAsset: ImagePicker.ImagePickerAsset, nextSource: FoodImageSource) => {
-    const validationError = validateAsset(nextAsset);
+    const validationError = validateAsset(nextAsset, t('analyze.errors.tooLarge'), t('analyze.errors.invalidType'));
     setPermissionIssue(null);
     setIntake(null);
     setResult(null);
@@ -153,7 +155,7 @@ export default function AnalyzeScreen() {
         }));
       }
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'No pudimos preparar la imagen');
+      setError(requestError instanceof Error ? requestError.message : t('analyze.errors.prepare'));
     } finally {
       setUploading(false);
     }
@@ -176,7 +178,7 @@ export default function AnalyzeScreen() {
       }));
       setReviewDirty(false);
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'No pudimos reevaluar las correcciones');
+      setError(requestError instanceof Error ? requestError.message : t('analyze.errors.review'));
     } finally {
       setReviewing(false);
     }
@@ -196,9 +198,9 @@ export default function AnalyzeScreen() {
       <KeyboardAvoidingView style={styles.keyboardArea} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.eyebrow}>CAPTURA MOBILE</Text>
-          <Text style={styles.title}>Analizar plato</Text>
-          <Text style={styles.subtitle}>Toma una foto clara, revisa la estimacion y confirma los datos antes de usar la evaluacion.</Text>
+          <Text style={styles.eyebrow}>{t('analyze.eyebrow')}</Text>
+          <Text style={styles.title}>{t('analyze.title')}</Text>
+          <Text style={styles.subtitle}>{t('analyze.subtitle')}</Text>
         </View>
 
         <FlowSteps phase={phase} />
@@ -209,7 +211,7 @@ export default function AnalyzeScreen() {
             {!visionStatus && !statusLoading ? (
               <Pressable accessibilityRole="button" onPress={() => { setStatusLoading(true); setError(''); void loadVisionStatus(); }} style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}>
                 <Ionicons name="refresh-outline" size={17} color={theme.colors.danger} />
-                <Text style={styles.retryText}>Reintentar</Text>
+                <Text style={styles.retryText}>{t('common.retry')}</Text>
               </Pressable>
             ) : null}
           </View>
@@ -222,7 +224,7 @@ export default function AnalyzeScreen() {
           <View style={styles.quotaStatus}>
             <Ionicons name="speedometer-outline" size={19} color={theme.colors.primary} />
             <Text style={styles.quotaText}>
-              {visionStatus.quota.dailyRemaining} de {visionStatus.quota.dailyLimit} analisis disponibles hoy
+              {t('analyze.quota', { remaining: visionStatus.quota.dailyRemaining, limit: visionStatus.quota.dailyLimit })}
             </Text>
           </View>
         ) : null}
@@ -232,26 +234,26 @@ export default function AnalyzeScreen() {
             <Ionicons name={visionStatus.configured ? 'shield-checkmark-outline' : 'flask-outline'} size={18} color={theme.colors.textMuted} />
             <Text style={styles.processingNoteText}>
               {visionStatus.configured
-                ? 'Cada analisis consume un intento diario. NutriEdu procesa la imagen sin conservar la foto.'
-                : 'Modo de demostracion: se valida la imagen sin enviarla a una IA externa ni generar costo.'}
+                ? t('analyze.processing.external')
+                : t('analyze.processing.demo')}
             </Text>
           </View>
         ) : null}
 
         <View style={styles.actionRow}>
-          <CaptureButton icon="camera-outline" label="Tomar foto" onPress={capturePhoto} />
-          <CaptureButton icon="images-outline" label="Elegir foto" onPress={selectPhoto} />
+          <CaptureButton icon="camera-outline" label={t('analyze.takePhoto')} onPress={capturePhoto} />
+          <CaptureButton icon="images-outline" label={t('analyze.choosePhoto')} onPress={selectPhoto} />
         </View>
 
         {permissionIssue ? (
           <View style={styles.permissionStatus}>
             <View style={styles.statusText}>
-              <Text style={styles.permissionTitle}>Permiso requerido</Text>
+              <Text style={styles.permissionTitle}>{t('analyze.permissions.title')}</Text>
               <Text style={styles.permissionMessage}>{permissionIssue.message}</Text>
             </View>
             <Pressable accessibilityRole="button" onPress={() => Linking.openSettings()} style={styles.settingsButton}>
               <Ionicons name="settings-outline" size={17} color={theme.colors.primary} />
-              <Text style={styles.settingsText}>Ajustes</Text>
+              <Text style={styles.settingsText}>{t('analyze.permissions.settings')}</Text>
             </Pressable>
           </View>
         ) : null}
@@ -259,15 +261,15 @@ export default function AnalyzeScreen() {
         {asset ? (
           <View style={styles.previewSection}>
             <View style={styles.previewHeader}>
-              <Text style={styles.sectionTitle}>Imagen seleccionada</Text>
-              <Pressable accessibilityRole="button" accessibilityLabel="Quitar imagen" hitSlop={8} onPress={clearAsset} style={styles.removeButton}>
+              <Text style={styles.sectionTitle}>{t('analyze.selectedImage')}</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel={t('analyze.removeImage')} hitSlop={8} onPress={clearAsset} style={styles.removeButton}>
                 <Ionicons name="trash-outline" size={19} color={theme.colors.danger} />
               </Pressable>
             </View>
             <Image source={{ uri: asset.uri }} resizeMode="cover" style={styles.preview} />
             <View style={styles.metadataRow}>
-              <Text style={styles.metadata}>{source === 'camera' ? 'Camara' : 'Galeria'}</Text>
-              <Text style={styles.metadata}>{formatBytes(asset.fileSize)}</Text>
+              <Text style={styles.metadata}>{source === 'camera' ? t('analyze.camera') : t('analyze.gallery')}</Text>
+              <Text style={styles.metadata}>{formatBytes(asset.fileSize, t('analyze.sizeUnavailable'))}</Text>
               <Text style={styles.metadata}>{asset.width} x {asset.height}</Text>
             </View>
 
@@ -278,7 +280,7 @@ export default function AnalyzeScreen() {
                 onPress={() => setConsent((current) => !current)}
                 style={styles.consentRow}>
                 <Ionicons name={consent ? 'checkbox' : 'square-outline'} size={23} color={theme.colors.primary} />
-                <Text style={styles.consentText}>Autorizo enviar esta imagen al proveedor externo para obtener una estimacion visual. NutriEdu no almacenara la foto.</Text>
+                <Text style={styles.consentText}>{t('analyze.consent')}</Text>
               </Pressable>
             ) : null}
 
@@ -288,14 +290,14 @@ export default function AnalyzeScreen() {
               onPress={prepareAnalysis}
               style={({ pressed }) => [styles.primaryButton, (uploading || !visionStatus || quotaExhausted || Boolean(visionStatus.configured && !consent)) && styles.disabled, pressed && styles.pressed]}>
               <Ionicons name="scan-outline" size={20} color="#FFFFFF" />
-              <Text style={styles.primaryButtonText}>{uploading ? 'Procesando imagen...' : quotaExhausted ? 'Limite diario alcanzado' : visionStatus?.configured ? 'Analizar imagen' : 'Validar imagen'}</Text>
+              <Text style={styles.primaryButtonText}>{uploading ? t('analyze.processingImage') : quotaExhausted ? t('analyze.quotaReached') : visionStatus?.configured ? t('analyze.analyzeImage') : t('analyze.validateImage')}</Text>
             </Pressable>
           </View>
         ) : (
           <View style={styles.emptyPreview}>
             <Ionicons name="image-outline" size={32} color={theme.colors.primary} />
-            <Text style={styles.emptyTitle}>Sin imagen seleccionada</Text>
-            <Text style={styles.emptyText}>Incluye el plato completo, usa buena luz y evita objetos que oculten los ingredientes.</Text>
+            <Text style={styles.emptyTitle}>{t('analyze.emptyTitle')}</Text>
+            <Text style={styles.emptyText}>{t('analyze.emptyText')}</Text>
           </View>
         )}
 
@@ -303,9 +305,9 @@ export default function AnalyzeScreen() {
           <View style={styles.validatedStatus}>
             <Ionicons name="checkmark-circle" size={24} color={theme.colors.primary} />
             <View style={styles.statusText}>
-              <Text style={styles.validatedTitle}>Imagen validada</Text>
-              <Text style={styles.validatedText}>Solicitud {intake.requestId.slice(0, 8)} · {formatBytes(intake.image.sizeBytes)}</Text>
-              <Text style={styles.validatedText}>La imagen no fue almacenada. Configura un proveedor de vision para generar resultados.</Text>
+              <Text style={styles.validatedTitle}>{t('analyze.validatedTitle')}</Text>
+              <Text style={styles.validatedText}>{t('analyze.request', { id: intake.requestId.slice(0, 8), size: formatBytes(intake.image.sizeBytes, t('analyze.sizeUnavailable')) })}</Text>
+              <Text style={styles.validatedText}>{t('analyze.validatedText')}</Text>
             </View>
           </View>
         ) : null}
@@ -315,19 +317,19 @@ export default function AnalyzeScreen() {
             onPress={openDevelopmentReview}
             style={({ pressed }) => [styles.previewResultButton, pressed && styles.pressed]}>
             <Ionicons name="eye-outline" size={19} color={theme.colors.primary} />
-            <Text style={styles.previewResultText}>Abrir resultado de prueba</Text>
+            <Text style={styles.previewResultText}>{t('analyze.openFixture')}</Text>
           </Pressable>
         ) : null}
           </>
         ) : (
           <View style={styles.resultToolbar}>
             <View style={styles.resultToolbarText}>
-              <Text style={styles.resultToolbarTitle}>Resultado listo para revisar</Text>
-              <Text style={styles.resultToolbarDescription}>Corrige ingredientes, porcion o nutrientes antes de reevaluar.</Text>
+              <Text style={styles.resultToolbarTitle}>{t('analyze.resultReady')}</Text>
+              <Text style={styles.resultToolbarDescription}>{t('analyze.resultReadyDescription')}</Text>
             </View>
             <Pressable accessibilityRole="button" onPress={clearAsset} style={({ pressed }) => [styles.newAnalysisButton, pressed && styles.pressed]}>
               <Ionicons name="camera-outline" size={18} color={theme.colors.primary} />
-              <Text style={styles.newAnalysisText}>Nuevo</Text>
+              <Text style={styles.newAnalysisText}>{t('analyze.newAnalysis')}</Text>
             </Pressable>
           </View>
         )}
@@ -348,10 +350,11 @@ export default function AnalyzeScreen() {
 }
 
 function FlowSteps({ phase }: { phase: number }) {
+  const { t } = useTranslation();
   const steps = [
-    { label: 'Foto', icon: 'camera-outline' as const },
-    { label: 'Procesar', icon: 'scan-outline' as const },
-    { label: 'Revisar', icon: 'checkmark-circle-outline' as const },
+    { label: t('analyze.steps.photo'), icon: 'camera-outline' as const },
+    { label: t('analyze.steps.process'), icon: 'scan-outline' as const },
+    { label: t('analyze.steps.review'), icon: 'checkmark-circle-outline' as const },
   ];
   return (
     <View style={styles.steps} accessibilityRole="progressbar" accessibilityValue={{ min: 1, max: 3, now: phase }}>
@@ -386,9 +389,9 @@ function CaptureButton({ icon, label, onPress }: {
   );
 }
 
-const validateAsset = (asset: ImagePicker.ImagePickerAsset) => {
-  if (asset.fileSize && asset.fileSize > MAX_IMAGE_BYTES) return 'La imagen supera el limite de 8 MB.';
-  if (asset.mimeType && !ALLOWED_IMAGE_TYPES.has(asset.mimeType)) return 'Usa una imagen JPEG, PNG, WebP o HEIC.';
+const validateAsset = (asset: ImagePicker.ImagePickerAsset, tooLargeMessage: string, invalidTypeMessage: string) => {
+  if (asset.fileSize && asset.fileSize > MAX_IMAGE_BYTES) return tooLargeMessage;
+  if (asset.mimeType && !ALLOWED_IMAGE_TYPES.has(asset.mimeType)) return invalidTypeMessage;
   return '';
 };
 
@@ -408,8 +411,8 @@ const mimeTypeFor = (fileName: string) => {
   return 'image/jpeg';
 };
 
-const formatBytes = (bytes?: number | null) => {
-  if (!bytes) return 'Tamano no disponible';
+const formatBytes = (bytes: number | null | undefined, unavailableLabel: string) => {
+  if (!bytes) return unavailableLabel;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
