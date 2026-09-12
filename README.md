@@ -48,6 +48,8 @@ Implementado:
 - primera suite Vitest para contrato HTTP, expiracion de sesion y claves seguras;
 - formularios ajustables al teclado para mantener visibles las busquedas inferiores;
 - captura desde camara o galeria con permisos, vista previa y validacion de imagen;
+- flujo guiado Foto, Procesar y Revisar que concentra la pantalla en la fase actual;
+- estado visible de cuota o modo de demostracion, reintento del proveedor y accion para iniciar un nuevo analisis;
 - intake multipart autenticado sin retencion de la imagen;
 - normalizacion local a JPEG antes del procesamiento visual externo;
 - consentimiento explicito por imagen cuando existe un proveedor configurado;

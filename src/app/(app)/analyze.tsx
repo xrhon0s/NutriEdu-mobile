@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
@@ -35,15 +35,35 @@ export default function AnalyzeScreen() {
   const [consent, setConsent] = useState(false);
   const [intake, setIntake] = useState<FoodImageIntakeResponse | null>(null);
   const [visionStatus, setVisionStatus] = useState<VisionProviderStatus | null>(null);
+  const [statusLoading, setStatusLoading] = useState(true);
   const [result, setResult] = useState<FoodAnalysisResponse | FoodAnalysisReviewResponse | null>(null);
   const quotaExhausted = visionStatus?.quota?.dailyRemaining === 0;
+
+  const loadVisionStatus = useCallback(async () => {
+    try {
+      setVisionStatus(await apiRequest<VisionProviderStatus>('/food-analysis/status', { token }));
+      setError('');
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'No pudimos consultar el proveedor visual');
+    } finally {
+      setStatusLoading(false);
+    }
+  }, [token]);
 
   useEffect(() => {
     let active = true;
     apiRequest<VisionProviderStatus>('/food-analysis/status', { token })
-      .then((status) => { if (active) setVisionStatus(status); })
+      .then((status) => {
+        if (active) {
+          setVisionStatus(status);
+          setError('');
+        }
+      })
       .catch((requestError) => {
         if (active) setError(requestError instanceof Error ? requestError.message : 'No pudimos consultar el proveedor visual');
+      })
+      .finally(() => {
+        if (active) setStatusLoading(false);
       });
     return () => { active = false; };
   }, [token]);
@@ -169,20 +189,51 @@ export default function AnalyzeScreen() {
     setError('');
   };
 
+  const phase = result ? 3 : asset ? 2 : 1;
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
       <KeyboardAvoidingView style={styles.keyboardArea} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-        <View>
+        <View style={styles.header}>
           <Text style={styles.eyebrow}>CAPTURA MOBILE</Text>
           <Text style={styles.title}>Analizar plato</Text>
+          <Text style={styles.subtitle}>Toma una foto clara, revisa la estimacion y confirma los datos antes de usar la evaluacion.</Text>
         </View>
+
+        <FlowSteps phase={phase} />
+
+        {error ? (
+          <View style={styles.errorStatus}>
+            <Text style={styles.error}>{error}</Text>
+            {!visionStatus && !statusLoading ? (
+              <Pressable accessibilityRole="button" onPress={() => { setStatusLoading(true); setError(''); void loadVisionStatus(); }} style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}>
+                <Ionicons name="refresh-outline" size={17} color={theme.colors.danger} />
+                <Text style={styles.retryText}>Reintentar</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
+
+        {!result ? (
+          <>
 
         {visionStatus?.configured && visionStatus.quota ? (
           <View style={styles.quotaStatus}>
             <Ionicons name="speedometer-outline" size={19} color={theme.colors.primary} />
             <Text style={styles.quotaText}>
               {visionStatus.quota.dailyRemaining} de {visionStatus.quota.dailyLimit} analisis disponibles hoy
+            </Text>
+          </View>
+        ) : null}
+
+        {visionStatus ? (
+          <View style={styles.processingNote}>
+            <Ionicons name={visionStatus.configured ? 'shield-checkmark-outline' : 'flask-outline'} size={18} color={theme.colors.textMuted} />
+            <Text style={styles.processingNoteText}>
+              {visionStatus.configured
+                ? 'Cada analisis consume un intento diario. NutriEdu procesa la imagen sin conservar la foto.'
+                : 'Modo de demostracion: se valida la imagen sin enviarla a una IA externa ni generar costo.'}
             </Text>
           </View>
         ) : null}
@@ -204,8 +255,6 @@ export default function AnalyzeScreen() {
             </Pressable>
           </View>
         ) : null}
-
-        {error ? <Text style={styles.error}>{error}</Text> : null}
 
         {asset ? (
           <View style={styles.previewSection}>
@@ -246,6 +295,7 @@ export default function AnalyzeScreen() {
           <View style={styles.emptyPreview}>
             <Ionicons name="image-outline" size={32} color={theme.colors.primary} />
             <Text style={styles.emptyTitle}>Sin imagen seleccionada</Text>
+            <Text style={styles.emptyText}>Incluye el plato completo, usa buena luz y evita objetos que oculten los ingredientes.</Text>
           </View>
         )}
 
@@ -268,6 +318,19 @@ export default function AnalyzeScreen() {
             <Text style={styles.previewResultText}>Abrir resultado de prueba</Text>
           </Pressable>
         ) : null}
+          </>
+        ) : (
+          <View style={styles.resultToolbar}>
+            <View style={styles.resultToolbarText}>
+              <Text style={styles.resultToolbarTitle}>Resultado listo para revisar</Text>
+              <Text style={styles.resultToolbarDescription}>Corrige ingredientes, porcion o nutrientes antes de reevaluar.</Text>
+            </View>
+            <Pressable accessibilityRole="button" onPress={clearAsset} style={({ pressed }) => [styles.newAnalysisButton, pressed && styles.pressed]}>
+              <Ionicons name="camera-outline" size={18} color={theme.colors.primary} />
+              <Text style={styles.newAnalysisText}>Nuevo</Text>
+            </Pressable>
+          </View>
+        )}
         {result ? (
           <FoodAnalysisReview
             analysis={result.analysis}
@@ -281,6 +344,32 @@ export default function AnalyzeScreen() {
       </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+  );
+}
+
+function FlowSteps({ phase }: { phase: number }) {
+  const steps = [
+    { label: 'Foto', icon: 'camera-outline' as const },
+    { label: 'Procesar', icon: 'scan-outline' as const },
+    { label: 'Revisar', icon: 'checkmark-circle-outline' as const },
+  ];
+  return (
+    <View style={styles.steps} accessibilityRole="progressbar" accessibilityValue={{ min: 1, max: 3, now: phase }}>
+      {steps.map((step, index) => {
+        const stepNumber = index + 1;
+        const active = stepNumber === phase;
+        const complete = stepNumber < phase;
+        return (
+          <View key={step.label} style={styles.step}>
+            <View style={[styles.stepIcon, (active || complete) && styles.stepIconActive]}>
+              <Ionicons name={complete ? 'checkmark' : step.icon} size={17} color={active || complete ? '#FFFFFF' : theme.colors.textMuted} />
+            </View>
+            <Text style={[styles.stepLabel, active && styles.stepLabelActive]}>{step.label}</Text>
+            {index < steps.length - 1 ? <View style={[styles.stepLine, complete && styles.stepLineComplete]} /> : null}
+          </View>
+        );
+      })}
+    </View>
   );
 }
 
@@ -342,10 +431,25 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: theme.colors.background },
   keyboardArea: { flex: 1 },
   content: { padding: theme.spacing.lg, gap: theme.spacing.lg, paddingBottom: 44 },
+  header: { gap: theme.spacing.xs },
   eyebrow: { color: theme.colors.primary, fontSize: 12, fontWeight: '800' },
   title: { color: theme.colors.text, fontSize: 27, fontWeight: '800', marginTop: theme.spacing.xs },
+  subtitle: { color: theme.colors.textMuted, fontSize: 14, lineHeight: 20 },
+  steps: { flexDirection: 'row', alignItems: 'flex-start' },
+  step: { flex: 1, minWidth: 0, alignItems: 'center', gap: 6 },
+  stepIcon: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', borderRadius: 17, borderWidth: 1, borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
+  stepIconActive: { borderColor: theme.colors.primary, backgroundColor: theme.colors.primary },
+  stepLabel: { color: theme.colors.textMuted, fontSize: 11, fontWeight: '700' },
+  stepLabelActive: { color: theme.colors.primaryPressed },
+  stepLine: { position: 'absolute', top: 16, left: '67%', width: '66%', height: 2, backgroundColor: theme.colors.border },
+  stepLineComplete: { backgroundColor: theme.colors.primary },
+  errorStatus: { gap: 8, borderLeftWidth: 3, borderLeftColor: theme.colors.danger, backgroundColor: theme.colors.dangerSurface, padding: 12 },
+  retryButton: { minHeight: 38, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6 },
+  retryText: { color: theme.colors.danger, fontSize: 13, fontWeight: '800' },
   quotaStatus: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, borderLeftWidth: 3, borderLeftColor: theme.colors.primary, backgroundColor: theme.colors.surfaceMuted, paddingHorizontal: 12 },
   quotaText: { flex: 1, color: theme.colors.primaryPressed, fontSize: 13, fontWeight: '700' },
+  processingNote: { flexDirection: 'row', alignItems: 'flex-start', gap: 9 },
+  processingNoteText: { flex: 1, color: theme.colors.textMuted, fontSize: 12, lineHeight: 18 },
   actionRow: { flexDirection: 'row', gap: 10 },
   captureButton: { flex: 1, minHeight: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.medium, backgroundColor: theme.colors.surface },
   captureButtonText: { color: theme.colors.primaryPressed, fontSize: 14, fontWeight: '800' },
@@ -355,7 +459,7 @@ const styles = StyleSheet.create({
   permissionMessage: { color: theme.colors.warning, fontSize: 13, lineHeight: 18, marginTop: 3 },
   settingsButton: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8 },
   settingsText: { color: theme.colors.primary, fontSize: 13, fontWeight: '800' },
-  error: { color: theme.colors.danger, backgroundColor: theme.colors.dangerSurface, borderRadius: theme.radius.small, padding: 12 },
+  error: { color: theme.colors.danger, lineHeight: 18 },
   previewSection: { gap: 12 },
   previewHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   sectionTitle: { color: theme.colors.text, fontSize: 17, fontWeight: '800' },
@@ -370,10 +474,17 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.55 },
   pressed: { opacity: 0.75 },
   emptyPreview: { minHeight: 210, alignItems: 'center', justifyContent: 'center', gap: 10, borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.medium, backgroundColor: theme.colors.surface },
-  emptyTitle: { color: theme.colors.textMuted, fontSize: 15, fontWeight: '700' },
+  emptyTitle: { color: theme.colors.text, fontSize: 16, fontWeight: '800' },
+  emptyText: { maxWidth: 280, color: theme.colors.textMuted, fontSize: 13, lineHeight: 19, textAlign: 'center', paddingHorizontal: 12 },
   validatedStatus: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.medium, backgroundColor: theme.colors.surfaceMuted, padding: theme.spacing.md },
   validatedTitle: { color: theme.colors.primaryPressed, fontSize: 16, fontWeight: '800' },
   validatedText: { color: theme.colors.textMuted, fontSize: 13, lineHeight: 18, marginTop: 4 },
   previewResultButton: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: theme.colors.primary, borderRadius: theme.radius.medium, backgroundColor: theme.colors.surface, paddingHorizontal: theme.spacing.md },
   previewResultText: { color: theme.colors.primary, fontSize: 14, fontWeight: '800' },
+  resultToolbar: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.medium, backgroundColor: theme.colors.surface, padding: 13 },
+  resultToolbarText: { flex: 1, minWidth: 0 },
+  resultToolbarTitle: { color: theme.colors.text, fontSize: 14, fontWeight: '800' },
+  resultToolbarDescription: { color: theme.colors.textMuted, fontSize: 12, lineHeight: 17, marginTop: 3 },
+  newAnalysisButton: { minHeight: 42, flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderColor: theme.colors.primary, borderRadius: theme.radius.small, paddingHorizontal: 10 },
+  newAnalysisText: { color: theme.colors.primary, fontSize: 12, fontWeight: '800' },
 });
