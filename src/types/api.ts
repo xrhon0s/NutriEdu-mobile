@@ -45,6 +45,7 @@ export type RecommendationProfileContext = {
   goals: string[];
   conditions: string[];
   clinicalReviewRequired: boolean;
+  progress?: { latestMeasurementDate: string; weightKg: number | null } | null;
 };
 
 export type NotificationCategory = 'meals' | 'weekly_plan' | 'shopping' | 'progress' | 'security';

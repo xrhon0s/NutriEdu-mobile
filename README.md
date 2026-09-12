@@ -22,6 +22,7 @@ Implementado:
 - resumen del perfil de recomendacion con datos base, objetivos, alertas y metas realmente configuradas;
 - seguimiento longitudinal de peso, cintura, grasa corporal, adherencia y energia, con resumen de cambios e historial paginado;
 - sincronizacion del peso vigente del perfil desde la medicion cronologicamente mas reciente;
+- indicacion en Recetas de la fecha y el peso reciente usados por la estimacion energetica del motor;
 - navegacion visual de las cuatro areas del perfil con iconos, conteos y contexto de cada seccion;
 - accesos de notificaciones, privacidad y expediente separados de las acciones que guardan datos clinicos;
 - inicio operativo con progreso semanal, comidas del dia, recomendacion principal, avisos y accesos rapidos;

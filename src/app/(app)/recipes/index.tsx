@@ -167,6 +167,9 @@ export default function RecipesScreen() {
             {view === 'recommended' && countActiveRecipeFilters(filters) === 0 && recommendationContext?.missingFactors?.includes('profile') ? (
               <Text style={styles.notice}>{t('recipes.incompleteProfile')}</Text>
             ) : null}
+            {view === 'recommended' && recommendationContext?.progress?.weightKg != null ? (
+              <Text style={styles.progressNotice}>El calculo usa tu peso mas reciente: {recommendationContext.progress.weightKg} kg ({String(recommendationContext.progress.latestMeasurementDate).slice(0, 10)}).</Text>
+            ) : null}
             {view === 'recommended' ? <RecipeFilterControls value={filters} onChange={setFilters} /> : null}
             <View style={styles.resultRow}>
               <Text style={styles.resultCount}>{t('recipes.loaded', { count: recipes.length })}</Text>
@@ -233,6 +236,7 @@ const styles = StyleSheet.create({
   error: { color: theme.colors.danger, backgroundColor: theme.colors.dangerSurface, borderRadius: theme.radius.small, padding: 12 },
   warning: { color: theme.colors.warning, backgroundColor: theme.colors.warningSurface, borderRadius: theme.radius.small, padding: 12, lineHeight: 19, fontWeight: '700' },
   notice: { color: theme.colors.text, backgroundColor: theme.colors.surfaceMuted, borderRadius: theme.radius.small, padding: 12, lineHeight: 19 },
+  progressNotice: { color: theme.colors.textMuted, fontSize: 12, lineHeight: 17, borderLeftWidth: 2, borderLeftColor: theme.colors.primary, paddingLeft: 10 },
   empty: { color: theme.colors.textMuted, textAlign: 'center', lineHeight: 20, paddingVertical: 48 },
   loadMoreButton: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: theme.colors.primary, borderRadius: theme.radius.medium, backgroundColor: theme.colors.surface, marginTop: theme.spacing.sm, paddingHorizontal: 14 },
   loadMoreText: { color: theme.colors.primary, fontSize: 14, fontWeight: '800' },
