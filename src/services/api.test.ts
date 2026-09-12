@@ -18,6 +18,11 @@ describe('apiRequest', () => {
     await expect(apiRequest('/invalid')).rejects.toMatchObject({ code: 'INVALID_INPUT', message: 'Solicitud invalida', status: 400 });
   });
 
+  it('preserves rate-limit timing and request correlation', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: 'RATE_LIMITED', message: 'Espera', retryAfterSeconds: 75, requestId: 'request-1' }), { status: 429 })));
+    await expect(apiRequest('/users/login')).rejects.toMatchObject({ code: 'RATE_LIMITED', status: 429, retryAfterSeconds: 75, requestId: 'request-1' });
+  });
+
   it('converts connectivity failures into a user-facing error', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Network request failed')));
     await expect(apiRequest('/profile')).rejects.toMatchObject({ status: 0 });

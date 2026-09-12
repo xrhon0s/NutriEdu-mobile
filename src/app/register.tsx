@@ -5,6 +5,7 @@ import { AuthScreen, FormField, FormMessage, PasswordRequirements, PrimaryButton
 import { useAuth } from '@/context/auth-context';
 import { ApiError, apiRequest } from '@/services/api';
 import { isPasswordValid } from '@/services/password-policy';
+import { rateLimitMessage } from '@/services/api-error';
 
 export default function RegisterScreen() {
   const { login } = useAuth();
@@ -41,11 +42,11 @@ export default function RegisterScreen() {
       await login(normalizedEmail, password);
       router.replace('/(app)/profile');
     } catch (registerError) {
-      setError(registerError instanceof ApiError && registerError.code === 'WEAK_PASSWORD'
+      setError(rateLimitMessage(registerError, t) || (registerError instanceof ApiError && registerError.code === 'WEAK_PASSWORD'
         ? t('auth.errors.weakPassword')
         : registerError instanceof ApiError && registerError.status === 400
           ? t('auth.errors.registrationRejected')
-          : t('auth.errors.registrationFailed'));
+          : t('auth.errors.registrationFailed')));
     } finally {
       setSubmitting(false);
     }

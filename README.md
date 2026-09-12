@@ -37,6 +37,7 @@ Implementado:
 - filtros reutilizados en el selector de recetas del planificador;
 - base i18n con recursos estructurados y espanol como unico idioma habilitado en esta version;
 - autenticacion mobile completamente migrada a recursos espanol/ingles, incluidos errores conocidos y etiquetas accesibles;
+- errores API conservan código, estado, `requestId` y tiempo de reintento; autenticación muestra en ambos idiomas cuántos minutos faltan ante `RATE_LIMITED`;
 - interfaz estatica de Perfil bilingue: secciones, opciones, validaciones, estados y controles compartidos; los nombres de catalogo servidos por la API permanecen pendientes de localizacion en datos;
 - captura y revision completa del analisis visual disponibles en recursos espanol/ingles;
 - recursos ingleses de navegacion, recetas y notificaciones conservados solo como trabajo de desarrollo, sin selector publico hasta completar UI, catalogos y mensajes del backend;

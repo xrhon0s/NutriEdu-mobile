@@ -3,12 +3,16 @@ const API_URL = (process.env.EXPO_PUBLIC_API_URL || 'https://nutriedu-backend.on
 export class ApiError extends Error {
   status: number;
   code: string | null;
+  retryAfterSeconds: number | null;
+  requestId: string | null;
 
-  constructor(message: string, status: number, code: string | null = null) {
+  constructor(message: string, status: number, code: string | null = null, retryAfterSeconds: number | null = null, requestId: string | null = null) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.code = code;
+    this.retryAfterSeconds = retryAfterSeconds;
+    this.requestId = requestId;
   }
 }
 
@@ -43,7 +47,14 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   if (!response.ok) {
     if (response.status === 401 && options.token) void unauthorizedHandler?.();
-    throw new ApiError(data?.message || data?.error || 'No pudimos completar la solicitud', response.status, data?.code || null);
+    const retryAfterSeconds = Number.isFinite(Number(data?.retryAfterSeconds)) ? Number(data.retryAfterSeconds) : null;
+    throw new ApiError(
+      data?.message || data?.error || 'No pudimos completar la solicitud',
+      response.status,
+      data?.code || null,
+      retryAfterSeconds,
+      data?.requestId || response.headers.get('X-Request-ID')
+    );
   }
 
   return data as T;

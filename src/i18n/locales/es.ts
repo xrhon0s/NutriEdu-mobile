@@ -64,6 +64,8 @@ export const es = {
       registrationFailed: 'No pudimos crear la cuenta. Intenta de nuevo.',
       emailRequired: 'Ingresa tu correo electronico.',
       resetRequestFailed: 'No pudimos enviar la solicitud. Intenta de nuevo.',
+      rateLimited_one: 'Demasiados intentos. Intenta nuevamente en {{count}} minuto.',
+      rateLimited_other: 'Demasiados intentos. Intenta nuevamente en {{count}} minutos.',
     },
     notices: { sessionExpired: 'Tu sesion expiro. Inicia sesion nuevamente.' },
   },
