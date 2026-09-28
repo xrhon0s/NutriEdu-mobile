@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { apiRequest, setUnauthorizedHandler } from './api';
+import { API_TIMEOUT_MS, apiRequest, setUnauthorizedHandler } from './api';
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   setUnauthorizedHandler(null);
@@ -25,7 +26,22 @@ describe('apiRequest', () => {
 
   it('converts connectivity failures into a user-facing error', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Network request failed')));
-    await expect(apiRequest('/profile')).rejects.toMatchObject({ status: 0 });
+    await expect(apiRequest('/profile')).rejects.toMatchObject({ code: 'NETWORK_ERROR', status: 0 });
+  });
+
+  it('aborts requests that would otherwise remain pending', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((_url, init: RequestInit) => new Promise((_resolve, reject) => {
+      init.signal?.addEventListener('abort', () => {
+        const error = new Error('Aborted');
+        error.name = 'AbortError';
+        reject(error);
+      });
+    })));
+
+    const expectation = expect(apiRequest('/slow')).rejects.toMatchObject({ code: 'REQUEST_TIMEOUT', status: 0 });
+    await vi.advanceTimersByTimeAsync(API_TIMEOUT_MS);
+    await expectation;
   });
 
   it('notifies authentication only for rejected protected requests', async () => {

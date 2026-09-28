@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { AuthScreen, FormField, FormMessage, PrimaryButton, TextLink } from '@/components/auth-form';
 import { apiRequest } from '@/services/api';
-import { rateLimitMessage } from '@/services/api-error';
+import { authApiErrorMessage } from '@/services/api-error';
 
 export default function ForgotPasswordScreen() {
   const { t } = useTranslation();
@@ -27,7 +27,7 @@ export default function ForgotPasswordScreen() {
       });
       setSuccess(t('auth.forgot.success'));
     } catch (requestError) {
-      setError(rateLimitMessage(requestError, t) || t('auth.errors.resetRequestFailed'));
+      setError(authApiErrorMessage(requestError, t) || t('auth.errors.resetRequestFailed'));
     } finally {
       setSubmitting(false);
     }

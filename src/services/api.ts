@@ -1,4 +1,8 @@
 const API_URL = (process.env.EXPO_PUBLIC_API_URL || 'https://nutriedu-backend.onrender.com/api').replace(/\/$/, '');
+const configuredTimeout = Number(process.env.EXPO_PUBLIC_API_TIMEOUT_MS);
+export const API_TIMEOUT_MS = Number.isFinite(configuredTimeout) && configuredTimeout >= 1000
+  ? configuredTimeout
+  : 30000;
 
 export class ApiError extends Error {
   status: number;
@@ -27,10 +31,20 @@ type RequestOptions = RequestInit & { token?: string | null };
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const isMultipart = typeof FormData !== 'undefined' && options.body instanceof FormData;
+  const controller = new AbortController();
+  let timedOut = false;
+  const abortFromCaller = () => controller.abort(options.signal?.reason);
+  if (options.signal?.aborted) abortFromCaller();
+  else options.signal?.addEventListener('abort', abortFromCaller, { once: true });
+  const timeout = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, API_TIMEOUT_MS);
   let response: Response;
   try {
     response = await fetch(`${API_URL}${path}`, {
       ...options,
+      signal: controller.signal,
       headers: {
         Accept: 'application/json',
         ...(!isMultipart ? { 'Content-Type': 'application/json' } : {}),
@@ -39,8 +53,14 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       },
     });
   } catch (error) {
+    if (timedOut) {
+      throw new ApiError('La solicitud tardo demasiado. Intenta de nuevo.', 0, 'REQUEST_TIMEOUT');
+    }
     if (error instanceof Error && error.name === 'AbortError') throw error;
-    throw new ApiError('No pudimos conectar con NutriEdu. Revisa tu conexion e intenta de nuevo.', 0);
+    throw new ApiError('No pudimos conectar con NutriEdu. Revisa tu conexion e intenta de nuevo.', 0, 'NETWORK_ERROR');
+  } finally {
+    clearTimeout(timeout);
+    options.signal?.removeEventListener('abort', abortFromCaller);
   }
 
   const data = await response.json().catch(() => null);

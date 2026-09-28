@@ -64,6 +64,8 @@ export const en = {
       registrationFailed: 'We could not create the account. Try again.',
       emailRequired: 'Enter your email address.',
       resetRequestFailed: 'We could not send the request. Try again.',
+      requestTimeout: 'The request took too long. Check your connection and try again.',
+      network: 'We could not connect to NutriEdu. Check your connection and try again.',
       rateLimited_one: 'Too many attempts. Try again in {{count}} minute.',
       rateLimited_other: 'Too many attempts. Try again in {{count}} minutes.',
     },

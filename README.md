@@ -248,6 +248,8 @@ REACT_NATIVE_PACKAGER_HOSTNAME=<IP_LAN> npx expo start --dev-client
 
 Desde el telefono, abrir `http://<IP_LAN>:3002/api/users/restrictions`. Una respuesta JSON o HTTP `401` demuestra que el backend es alcanzable. Luego introducir `http://<IP_LAN>:8081` en el launcher del development client. Si Metro no registra ningun intento, revisar que ambos dispositivos compartan Wi-Fi y que no exista VPN, red de invitados o aislamiento entre clientes.
 
+Si el login queda cargando después de cambiar de Wi-Fi o usar un hotspot, comparar la IP de `.env` con la IP actual del Mac. `npm run android:lan` actualiza ambas direcciones e inicia Metro; para iPhone se puede reiniciar manualmente con caché limpia usando `npx expo start --dev-client --clear`. Las peticiones HTTP tienen un timeout de 30 segundos (`EXPO_PUBLIC_API_TIMEOUT_MS` permite ajustarlo, con mínimo de un segundo), por lo que una API inaccesible devuelve un mensaje de red o tiempo agotado en vez de bloquear indefinidamente el formulario.
+
 ## Estructura inicial
 
 ```txt

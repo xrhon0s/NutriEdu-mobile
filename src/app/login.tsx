@@ -6,7 +6,7 @@ import { AuthScreen, FormField, FormMessage, PrimaryButton, TextLink } from '@/c
 import { useAuth } from '@/context/auth-context';
 import { theme } from '@/constants/nutriedu-theme';
 import { ApiError } from '@/services/api';
-import { rateLimitMessage } from '@/services/api-error';
+import { authApiErrorMessage } from '@/services/api-error';
 
 export default function LoginScreen() {
   const { login, notice, clearNotice } = useAuth();
@@ -17,6 +17,7 @@ export default function LoginScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   const handleLogin = async () => {
+    if (submitting) return;
     if (!email.trim() || !password) {
       setError(t('auth.errors.requiredCredentials'));
       return;
@@ -29,7 +30,7 @@ export default function LoginScreen() {
       await login(email, password);
       router.replace('/(app)/profile');
     } catch (loginError) {
-      setError(rateLimitMessage(loginError, t) || (loginError instanceof ApiError && loginError.status === 401
+      setError(authApiErrorMessage(loginError, t) || (loginError instanceof ApiError && loginError.status === 401
         ? t('auth.errors.invalidCredentials')
         : t('auth.errors.loginFailed')));
     } finally {
